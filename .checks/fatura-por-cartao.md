@@ -223,3 +223,16 @@ não os 260 KB do arquivo — são JSON de dados editados por inserção pontual
 **Hand off após S2**: batch 1 = S1+S2 (84k, toda a superfície frontend da fatura é compartilhada),
 batch 2 = S3 (99k, a superfície muda para o backend de contas). Fronteira coincide com a troca de
 superfície.
+
+- **Onde caiu a fronteira**: C1–C17 fechados pelo commit `894bd01` (S1+S2 completos; todos os
+  proofs verdes — 5 pytest, 15 vitest, suíte frontend inteira 929 ok, tsc limpo).
+- **O que o usuário decidiu no meio do build**: nada — nenhuma clarificação nem renegociação; a
+  única porta nova (paginação além do limit, critério 11) ganhou linha em `Landing` e não
+  contradiz nada aprovado.
+- **O que foi abandonado**: nada tentado e descartado. Avisos úteis ao próximo agente que o diff
+  não mostra: `uv sync --all-extras` em `backend/` é necessário antes do primeiro pytest (o venv
+  não vem com dev extras); o teste `i18n.test.ts` exige toda chave nova de `en.json` em todos os
+  15 locales (padrão de inserção: ver commit, chave `accounts.noCard`); `delete_account` recusa
+  contas com `connection_id` — o teste de C30 precisa de conta manual; SQLite dos testes não
+  aplica `ON DELETE CASCADE`, então C30 precisa de remoção explícita em `delete_account` além da
+  cascata na migração.
