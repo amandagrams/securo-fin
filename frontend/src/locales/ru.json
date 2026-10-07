@@ -1216,6 +1216,7 @@
     "dueDate": "Дата платежа",
     "minimumPayment": "Минимум",
     "noChargesYet": "В этом цикле пока нет начислений",
+    "noCard": "Без карты",
     "currentTag": "сейчас",
     "overdueDays": "Просрочено на {{count}} дней",
     "dueIn": "Осталось {{count}} дней",

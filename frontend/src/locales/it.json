@@ -1203,6 +1203,7 @@
     "dueDate": "Data di scadenza",
     "minimumPayment": "Minimo",
     "noChargesYet": "Ancora nessun addebito in questo ciclo",
+    "noCard": "Senza carta",
     "currentTag": "ora",
     "overdueDays": "In ritardo di {{count}} giorni",
     "dueIn": "Scade tra {{count}} giorni",

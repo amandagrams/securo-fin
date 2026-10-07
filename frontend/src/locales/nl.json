@@ -1200,6 +1200,7 @@
     "dueDate": "Vervaldatum",
     "minimumPayment": "Minimaal",
     "noChargesYet": "Nog geen kosten deze cyclus",
+    "noCard": "Geen kaart",
     "currentTag": "nu",
     "overdueDays": "Te laat met {{count}} dagen",
     "dueIn": "Te verwachten over {{count}} dagen",

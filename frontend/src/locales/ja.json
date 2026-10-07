@@ -1199,6 +1199,7 @@
     "dueDate": "支払期日",
     "minimumPayment": "最低支払額",
     "noChargesYet": "今サイクルの請求はまだありません",
+    "noCard": "カードなし",
     "currentTag": "現在",
     "overdueDays": "{{count}}日延滞中",
     "dueIn": "あと{{count}}日で支払期日",

@@ -33,8 +33,9 @@ chave nova em `en.json` presente nos 17 locales.
 | Um nome por cartão por conta | unicidade `(account_id, card_number)`; `PUT` é upsert; último a gravar vence | unicidade por `(workspace_id, card_number)` - bancos distintos repetem 4 dígitos |
 | Rotas aninhadas na conta | `GET /api/accounts/{id}/cards` → `[{card_number, name}]`; `PUT .../cards/{card_number}` `{"name"}` → `{card_number, name}`; escrita `current_writable_workspace`, leitura `current_workspace` | `PATCH /api/accounts/{id}` com mapa - mistura edição da conta com a dos cartões |
 
-- Nada mais aqui é difícil de reverter. Como o critério 11 será satisfeito (o lançamento 501
-  além do `limit` 500) é decisão de build, reversível; ganha linha aqui quando decidida.
+| Critério 11: lançamentos além do `limit` (build) | na conta `credit_card`, a query da lista busca as páginas seguintes até `items.length === total` e concatena; contas não-cartão mantêm a busca única de hoje | subir o cap `le=500` de `GET /api/transactions` - muda o custo máximo da rota para todo consumidor e só empurra o problema até o próximo cap |
+
+- Nada mais aqui é difícil de reverter.
 
 ## Checks
 

@@ -1199,6 +1199,7 @@
     "dueDate": "Due date",
     "minimumPayment": "Minimum",
     "noChargesYet": "No charges yet this cycle",
+    "noCard": "No card",
     "currentTag": "now",
     "overdueDays": "Overdue by {{count}} days",
     "dueIn": "Due in {{count}} days",

@@ -1255,6 +1255,7 @@
     "dueDate": "Dátum splatnosti",
     "minimumPayment": "Minimum",
     "noChargesYet": "V tomto cykle zatiaľ žiadne čerpanie",
+    "noCard": "Bez karty",
     "currentTag": "teraz",
     "overdueDays": "{{count}} dní po splatnosti",
     "overdueDays_one": "{{count}} deň po splatnosti",

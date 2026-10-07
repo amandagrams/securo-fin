@@ -280,6 +280,10 @@ export interface Transaction {
   effective_bill_date: string | null
   // The recurring bill this transaction fulfills, if any (issue #116).
   recurring_transaction_id?: string | null
+  // The card that made this transaction — an additional or virtual card can
+  // differ from the account's own. Text, untruncated, leading zeros kept.
+  // Null when the provider sent no card metadata.
+  card_number: string | null
   splits: TransactionSplit[]
   // Shared-transaction view fields. Set per-request when the viewer
   // is a linked split member but not the owner. Render `viewer_share`

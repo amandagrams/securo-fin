@@ -1200,6 +1200,7 @@
     "dueDate": "Fällig am",
     "minimumPayment": "Mindestbetrag",
     "noChargesYet": "Noch keine Umsätze in diesem Abrechnungszeitraum",
+    "noCard": "Keine Karte",
     "currentTag": "jetzt",
     "overdueDays": "Seit {{count}} Tagen überfällig",
     "dueIn": "Fällig in {{count}} Tagen",

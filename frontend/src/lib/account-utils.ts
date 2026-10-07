@@ -69,6 +69,15 @@ export function formatAccountMask(account: { masked_number?: string | null }): s
 }
 
 /**
+ * A transaction's card identifier masked to its last 4 chars, e.g. "•••• 0597",
+ * in the same format `formatAccountMask` uses. Null in, nothing out, so callers
+ * render nothing rather than an empty mask.
+ */
+export function formatCardMask(cardNumber: string | null | undefined): string | null {
+  return cardNumber ? `•••• ${cardNumber.slice(-4)}` : null
+}
+
+/**
  * Account name with its mask appended, e.g. "Checking •••• 1234", for compact
  * single-line surfaces such as the account <select> options, where there is no
  * room for a secondary line. When the account has an explicit display_name, the

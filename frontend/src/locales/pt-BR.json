@@ -1203,6 +1203,7 @@
     "dueDate": "Vencimento",
     "minimumPayment": "Mínimo",
     "noChargesYet": "Nenhuma compra ainda neste ciclo",
+    "noCard": "Sem cartão",
     "currentTag": "agora",
     "overdueDays": "Atrasado há {{count}} dias",
     "dueIn": "Vence em {{count}} dias",

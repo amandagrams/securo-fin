@@ -28,6 +28,9 @@ interface MobileTransactionRowProps {
   onClick: (tx: Transaction) => void
   /** Show the payee instead of the account name in an account-scoped view. */
   showPayee?: boolean
+  /** Mask of the card that made the charge, e.g. "•••• 0597". Passed only by
+   *  the credit-card account page; other surfaces don't show card identity. */
+  cardMask?: string | null
 }
 
 export function MobileTransactionRow({
@@ -44,6 +47,7 @@ export function MobileTransactionRow({
   onSelect,
   onClick,
   showPayee = false,
+  cardMask = null,
 }: MobileTransactionRowProps) {
   const { mask } = usePrivacyMode()
   const { t } = useTranslation()
@@ -147,6 +151,11 @@ export function MobileTransactionRow({
             <Paperclip size={11} className="text-muted-foreground shrink-0" />
           )}
         </div>
+
+        {/* Card that made the charge (credit-card account page only) */}
+        {cardMask && (
+          <p className="text-[10px] text-muted-foreground tabular-nums mt-0.5">{cardMask}</p>
+        )}
 
         {/* Account row or payee row */}
         {showPayee ? (

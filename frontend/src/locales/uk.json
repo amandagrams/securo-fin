@@ -1216,6 +1216,7 @@
     "dueDate": "Дата платежу",
     "minimumPayment": "Мінімум",
     "noChargesYet": "У цьому циклі поки немає нарахувань",
+    "noCard": "Без картки",
     "currentTag": "зараз",
     "overdueDays": "Прострочено на {{count}} днів",
     "dueIn": "Залишилось {{count}} днів",

@@ -1203,6 +1203,7 @@
     "dueDate": "Date d'échéance",
     "minimumPayment": "Minimum",
     "noChargesYet": "Aucun prélèvement pour ce cycle",
+    "noCard": "Sans carte",
     "currentTag": "actuel",
     "overdueDays": "En retard de {{count}} jours",
     "dueIn": "Échéance dans {{count}} jours",

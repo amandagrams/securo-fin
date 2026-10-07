@@ -1,5 +1,6 @@
-import { useState, useMemo } from 'react'
-import { getAccountName } from '@/lib/account-utils'
+import { Fragment, useState, useMemo } from 'react'
+import { formatCardMask, getAccountName } from '@/lib/account-utils'
+import { cardGroupSubtotal, groupBillByCard } from '@/lib/credit-card-groups'
 import { useParams, Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useDisplayLocale, useDateLocale } from '@/hooks/use-display-locale'
@@ -261,6 +262,30 @@ function utilizationColor(pct: number): string {
 
 type TxWithBalance = Transaction & { runningBalance: number }
 
+/** Rows bucketed by day for the mobile list, newest group first. The date
+ * stays visible without spending a full column on every row. */
+function groupRowsByDate(rows: TxWithBalance[], dateLocale: string) {
+  const groups: { date: string; label: string; items: TxWithBalance[] }[] = []
+  let current: { date: string; label: string; items: TxWithBalance[] } | null = null
+  for (const tx of rows) {
+    if (!current || current.date !== tx.date) {
+      current = {
+        date: tx.date,
+        label: new Date(tx.date + 'T00:00:00').toLocaleDateString(dateLocale, {
+          weekday: 'short',
+          day: 'numeric',
+          month: 'short',
+          year: 'numeric',
+        }),
+        items: [],
+      }
+      groups.push(current)
+    }
+    current.items.push(tx)
+  }
+  return groups
+}
+
 export default function AccountDetailPage() {
   const { id } = useParams<{ id: string }>()
   const { t, i18n } = useTranslation()
@@ -510,23 +535,39 @@ export default function AccountDetailPage() {
   })
 
   const { data: txData, isLoading: txLoading } = useQuery({
-    queryKey: ['transactions', { account_id: id, bill_id: activeBill?.id, from: filterFrom, to: filterTo, limit: 500, include_opening_balance: true, unbilled_only: isInProgressCycle }],
-    queryFn: () => transactions.list({
-      account_id: id,
-      // When the active cycle is a real bill, prefer bill_id (Pluggy's
-      // truth — picks up charges the bank rolled outside the nominal date
-      // range) AND keep from/to so manual / non-bill-linked txs (recurring
-      // fills, CSV imports) bucketed into this cycle still show up.
-      bill_id: activeBill?.id,
-      // For the in-progress cycle (CC has bills, but no bill matches the
-      // current view), exclude already-billed txs so the bar/list only
-      // shows what's accumulating toward the next bill.
-      unbilled_only: isInProgressCycle || undefined,
-      from: filterFrom || undefined,
-      to: filterTo || undefined,
-      limit: 500,
-      include_opening_balance: true,
-    }),
+    queryKey: ['transactions', { account_id: id, bill_id: activeBill?.id, from: filterFrom, to: filterTo, limit: 500, include_opening_balance: true, unbilled_only: isInProgressCycle, all_pages: account?.type === 'credit_card' }],
+    queryFn: async () => {
+      const params = {
+        account_id: id,
+        // When the active cycle is a real bill, prefer bill_id (Pluggy's
+        // truth — picks up charges the bank rolled outside the nominal date
+        // range) AND keep from/to so manual / non-bill-linked txs (recurring
+        // fills, CSV imports) bucketed into this cycle still show up.
+        bill_id: activeBill?.id,
+        // For the in-progress cycle (CC has bills, but no bill matches the
+        // current view), exclude already-billed txs so the bar/list only
+        // shows what's accumulating toward the next bill.
+        unbilled_only: isInProgressCycle || undefined,
+        from: filterFrom || undefined,
+        to: filterTo || undefined,
+        limit: 500,
+        include_opening_balance: true,
+      }
+      const first = await transactions.list(params)
+      if (account?.type !== 'credit_card') return first
+      // A bill is a total, not a page: the per-card subtotals must cover
+      // every row, so a cycle with more rows than the API's page cap
+      // keeps fetching until the list matches the reported total.
+      let items = first.items
+      let page = 1
+      while (items.length < first.total) {
+        page += 1
+        const next = await transactions.list({ ...params, page })
+        if (next.items.length === 0) break
+        items = items.concat(next.items)
+      }
+      return { ...first, items }
+    },
     enabled: !!id,
   })
 
@@ -689,6 +730,7 @@ export default function AccountDetailPage() {
       bill_id: null,
       effective_bill_date: null,
       recurring_transaction_id: p.recurring_id,
+      card_number: null,
       splits: [],
       is_ignored: false,
       virtual: true,
@@ -831,29 +873,25 @@ export default function AccountDetailPage() {
 
   // The mobile transaction view is intentionally grouped by day so the date
   // remains visible without spending a full column on every row.
-  const groupedByDate = useMemo(() => {
-    const groups: { date: string; label: string; items: TxWithBalance[] }[] = []
-    let current: { date: string; label: string; items: TxWithBalance[] } | null = null
-    for (const tx of displayRows) {
-      if (!current || current.date !== tx.date) {
-        current = {
-          date: tx.date,
-          label: new Date(tx.date + 'T00:00:00').toLocaleDateString(dateLocale, {
-            weekday: 'short',
-            day: 'numeric',
-            month: 'short',
-            year: 'numeric',
-          }),
-          items: [],
-        }
-        groups.push(current)
-      }
-      current.items.push(tx)
-    }
-    return groups
-  }, [displayRows, dateLocale])
+  const groupedByDate = useMemo(
+    () => groupRowsByDate(displayRows, dateLocale),
+    [displayRows, dateLocale],
+  )
+
+  // The open bill split by the card that made each charge (additional and
+  // virtual cards differ from the account's own). Null while there is
+  // nothing to split — zero or one bucket — so the list stays flat.
+  const cardGroups = useMemo(() => {
+    if (!isCreditCard) return null
+    return groupBillByCard(displayRows, account?.masked_number ?? null)
+  }, [isCreditCard, displayRows, account?.masked_number])
 
   const isLoading = accountLoading || summaryLoading
+
+  // "Amanda •••• 0597" once a card has a name (S3); until then the mask
+  // alone, and the no-card bucket by its translated title.
+  const cardGroupTitle = (cardNumber: string | null) =>
+    formatCardMask(cardNumber) ?? t('accounts.noCard')
 
   if (isLoading) {
     return (
@@ -1554,7 +1592,22 @@ export default function AccountDetailPage() {
             <p className="p-6 text-center text-muted-foreground">{t('accounts.noTransactions')}</p>
           ) : isMobile ? (
             <div>
-              {groupedByDate.map((group) => (
+              {(cardGroups ?? [{ cardNumber: null as string | null, rows: displayRows }]).map((cardGroup, cardGroupIndex) => (
+                <div key={cardGroup.cardNumber ?? `flat-${cardGroupIndex}`}>
+                  {cardGroups && (
+                    <div
+                      data-testid="card-group"
+                      className="bg-muted px-4 py-2 border-b border-border flex items-center justify-between gap-2"
+                    >
+                      <span className="text-xs font-bold text-foreground tracking-wide">
+                        {cardGroupTitle(cardGroup.cardNumber)}
+                      </span>
+                      <span className="text-xs font-semibold tabular-nums text-muted-foreground">
+                        {mask(formatCurrency(cardGroupSubtotal(cardGroup.rows, usePrimary, displayCurrency), displayCurrency, locale))}
+                      </span>
+                    </div>
+                  )}
+                  {(cardGroups ? groupRowsByDate(cardGroup.rows, dateLocale) : groupedByDate).map((group) => (
                 <div key={group.date}>
                   <div className="bg-muted/80 px-4 py-1.5 border-b border-border">
                     <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
@@ -1573,6 +1626,7 @@ export default function AccountDetailPage() {
                       highlighted={false}
                       locale={locale}
                       userCurrency={userCurrency}
+                      cardMask={isCreditCard ? formatCardMask(tx.card_number) : null}
                       onSelect={() => {}}
                       showPayee
                       onClick={(clickedTx) => {
@@ -1585,6 +1639,8 @@ export default function AccountDetailPage() {
                         }
                       }}
                     />
+                  ))}
+                </div>
                   ))}
                 </div>
               ))}
@@ -1602,7 +1658,23 @@ export default function AccountDetailPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {displayRows.map((tx) => {
+                  {(cardGroups ?? [{ cardNumber: null as string | null, rows: displayRows }]).map((cardGroup, cardGroupIndex) => (
+                  <Fragment key={cardGroup.cardNumber ?? `flat-${cardGroupIndex}`}>
+                  {cardGroups && (
+                    <tr data-testid="card-group" className="bg-muted/60 border-b">
+                      <td colSpan={5} className="px-3 sm:px-4 py-2">
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="text-xs font-bold text-foreground tracking-wide">
+                            {cardGroupTitle(cardGroup.cardNumber)}
+                          </span>
+                          <span className="text-xs font-semibold tabular-nums text-muted-foreground">
+                            {mask(formatCurrency(cardGroupSubtotal(cardGroup.rows, usePrimary, displayCurrency), displayCurrency, locale))}
+                          </span>
+                        </div>
+                      </td>
+                    </tr>
+                  )}
+                  {cardGroup.rows.map((tx) => {
                     const isOpening = tx.source === 'opening_balance'
                     const isTransfer = !!tx.transfer_pair_id
                     const isIgnored = tx.is_ignored
@@ -1625,6 +1697,11 @@ export default function AccountDetailPage() {
                           <div className="flex items-center gap-1.5 min-w-0">
                             <span className="font-semibold text-foreground text-sm truncate">{tx.description}</span>
                             <div className="flex items-center gap-1 shrink-0">
+                            {isCreditCard && tx.card_number && (
+                              <span className="ml-1 text-xs text-muted-foreground tabular-nums">
+                                {formatCardMask(tx.card_number)}
+                              </span>
+                            )}
                             {isOpening && (
                               <span className="ml-2 text-xs text-muted-foreground font-normal border border-border rounded px-1.5 py-0.5">
                                 {t('accounts.openingBalance')}
@@ -1715,6 +1792,8 @@ export default function AccountDetailPage() {
                       </tr>
                     )
                   })}
+                  </Fragment>
+                  ))}
                 </tbody>
               </table>
             </div>
