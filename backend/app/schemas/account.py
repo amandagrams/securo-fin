@@ -3,7 +3,7 @@ from datetime import date, datetime
 from decimal import Decimal
 from typing import Optional
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class AccountBase(BaseModel):
@@ -90,6 +90,27 @@ class CreditCardBillRead(BaseModel):
     minimum_payment: Optional[float] = None
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class AccountCardRead(BaseModel):
+    """A card seen on this account's transactions, with the name the user
+    gave it. The list is what the bill saw: a card that never appeared on a
+    transaction is not listed (and cannot be named)."""
+
+    card_number: str
+    name: Optional[str] = None
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class AccountCardUpdate(BaseModel):
+    """Body of PUT /api/accounts/{account_id}/cards/{card_number}.
+
+    `name` longer than 255 chars is a 422; surrounding whitespace is
+    trimmed by the service, and a blank result clears the name to null.
+    """
+
+    name: Optional[str] = Field(default=None, max_length=255)
 
 
 class AccountSummary(BaseModel):

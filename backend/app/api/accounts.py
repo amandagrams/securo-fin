@@ -13,6 +13,8 @@ from app.core.workspace_context import (
     current_writable_workspace,
 )
 from app.schemas.account import (
+    AccountCardRead,
+    AccountCardUpdate,
     AccountCreate,
     AccountRead,
     AccountSummary,
@@ -128,6 +130,44 @@ async def get_account_bills(
     if bills is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Account not found")
     return bills
+
+
+@router.get("/{account_id}/cards", response_model=list[AccountCardRead])
+async def list_account_cards(
+    account_id: uuid.UUID,
+    ctx: WorkspaceContext = Depends(current_workspace),
+    session: AsyncSession = Depends(get_async_session),
+):
+    """One item per distinct card_number seen on the account's transactions
+    (`raw_data.creditCardMetadata.cardNumber`), each with the name the user
+    gave it. The account's own card comes first, then the rest in ascending
+    lexicographic order. Transactions without a card_number produce no item.
+    """
+    cards = await account_service.get_account_cards(session, account_id, ctx.workspace.id)
+    if cards is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Account not found")
+    return cards
+
+
+@router.put("/{account_id}/cards/{card_number}", response_model=AccountCardRead)
+async def update_account_card(
+    account_id: uuid.UUID,
+    card_number: str,
+    data: AccountCardUpdate,
+    ctx: WorkspaceContext = Depends(current_writable_workspace),
+    session: AsyncSession = Depends(get_async_session),
+):
+    """Name a card (upsert on (account_id, card_number)). A blank name
+    clears it to null. 404 when the account isn't in this workspace or the
+    card_number never appeared on any transaction of the account."""
+    card = await account_service.upsert_account_card(
+        session, account_id, ctx.workspace.id, ctx.user_id, card_number, data.name
+    )
+    if card is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Account or card not found"
+        )
+    return card
 
 
 @router.get("/{account_id}", response_model=AccountRead)

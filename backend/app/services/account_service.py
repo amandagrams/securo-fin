@@ -238,6 +238,128 @@ async def get_credit_card_bills(
     return list(result.scalars().all())
 
 
+def _transaction_card_number():
+    """SQL expression for the card that made a transaction, as text.
+
+    Mirrors `Transaction.card_number` (the read-time property): the value
+    lives in `raw_data.creditCardMetadata.cardNumber`, is never truncated,
+    and missing/null/empty all read as NULL. JSON path extraction compiles
+    on both PostgreSQL and SQLite, so the list endpoint and the tests run
+    the same query.
+    """
+    return Transaction.raw_data["creditCardMetadata"]["cardNumber"].as_string()
+
+
+def _sort_card_numbers(card_numbers: list[str], masked_number: Optional[str]) -> list[str]:
+    """Criterion 7's order: the account's own card first (card_number equal
+    to `masked_number`), then the rest in ascending lexicographic order.
+    A null `masked_number` starts straight at the lexicographic order."""
+    return sorted(
+        card_numbers,
+        key=lambda cn: (0 if masked_number is not None and cn == masked_number else 1, cn),
+    )
+
+
+async def _account_card_numbers(session: AsyncSession, account_id: uuid.UUID) -> list[str]:
+    card_col = _transaction_card_number()
+    result = await session.execute(
+        select(card_col)
+        .where(
+            Transaction.account_id == account_id,
+            card_col.is_not(None),
+            card_col != "",
+        )
+        .distinct()
+    )
+    return [row[0] for row in result.all()]
+
+
+async def get_account_cards(
+    session: AsyncSession, account_id: uuid.UUID, workspace_id: uuid.UUID
+) -> Optional[list[dict]]:
+    """One item per distinct card_number seen on the account's transactions,
+    with the user-given name when one exists.
+
+    Returns None when the account doesn't exist in this workspace (the
+    caller maps that to a 404). Transactions without a card_number produce
+    no item. A named card whose transactions are gone is not listed either —
+    its `account_cards` row survives, so the name returns with the card.
+    """
+    from app.models.account_card import AccountCard
+
+    account = await get_account(session, account_id, workspace_id)
+    if account is None:
+        return None
+    card_numbers = await _account_card_numbers(session, account_id)
+    names_result = await session.execute(
+        select(AccountCard.card_number, AccountCard.name).where(
+            AccountCard.account_id == account_id
+        )
+    )
+    names = dict(names_result.all())
+    return [
+        {"card_number": cn, "name": names.get(cn)}
+        for cn in _sort_card_numbers(card_numbers, account.masked_number)
+    ]
+
+
+async def upsert_account_card(
+    session: AsyncSession,
+    account_id: uuid.UUID,
+    workspace_id: uuid.UUID,
+    user_id: uuid.UUID,
+    card_number: str,
+    name: Optional[str],
+) -> Optional[dict]:
+    """Name a card, or clear its name. Returns None for "not found": the
+    account is not in this workspace, or the card_number never appeared on
+    any transaction of the account — the list is what the bill saw, so a
+    card that was never seen cannot be named.
+
+    The write is an INSERT .. ON CONFLICT DO UPDATE on the
+    (account_id, card_number) unique constraint, so two concurrent PUTs
+    cannot create two rows or blow up with an IntegrityError: the last one
+    to write wins. The dialect branch exists because tests run on SQLite
+    while production runs PostgreSQL; both sides compile the same upsert.
+    """
+    from sqlalchemy.dialects.postgresql import insert as pg_insert
+    from sqlalchemy.dialects.sqlite import insert as sqlite_insert
+
+    from app.models.account_card import AccountCard
+
+    account = await get_account(session, account_id, workspace_id)
+    if account is None:
+        return None
+    seen = await _account_card_numbers(session, account_id)
+    if card_number not in seen:
+        return None
+
+    normalized = (name or "").strip() or None
+    now = datetime.now(timezone.utc)
+    bind = session.get_bind()
+    insert_fn = pg_insert if bind.dialect.name == "postgresql" else sqlite_insert
+    stmt = (
+        insert_fn(AccountCard)
+        .values(
+            id=uuid.uuid4(),
+            user_id=user_id,
+            workspace_id=workspace_id,
+            account_id=account_id,
+            card_number=card_number,
+            name=normalized,
+            created_at=now,
+            updated_at=now,
+        )
+        .on_conflict_do_update(
+            index_elements=["account_id", "card_number"],
+            set_={"name": normalized, "updated_at": now},
+        )
+    )
+    await session.execute(stmt)
+    await session.commit()
+    return {"card_number": card_number, "name": normalized}
+
+
 async def get_account(session: AsyncSession, account_id: uuid.UUID, workspace_id: uuid.UUID) -> Optional[Account]:
     result = await session.execute(
         select(Account)
@@ -620,6 +742,13 @@ async def delete_account(session: AsyncSession, account_id: uuid.UUID, workspace
         update(Goal)
         .where(Goal.account_id == account_id)
         .values(account_id=None)
+    )
+    # Card names belong to the account; migration 097 cascades them at the
+    # DB level and this delete keeps the behavior explicit (and true on the
+    # SQLite test database, which doesn't enforce the FK cascade).
+    from app.models.account_card import AccountCard
+    await session.execute(
+        delete(AccountCard).where(AccountCard.account_id == account_id)
     )
 
     await session.delete(account)
