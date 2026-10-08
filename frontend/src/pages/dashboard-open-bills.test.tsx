@@ -8,7 +8,7 @@ import { resolveDateFnsLocale } from '@/lib/date-fns-locale'
 import { formatCurrency } from '@/lib/format'
 import { currentMonth, monthRange, shiftMonth } from '@/lib/month-utils'
 import DashboardPage from '@/pages/dashboard'
-import { renderWithProviders, t, i18n } from '@/test/utils'
+import { renderWithProviders, i18n } from '@/test/utils'
 import type { DashboardSummary, OpenCreditCardBills } from '@/types'
 
 const api = vi.hoisted(() => ({
@@ -102,10 +102,6 @@ const summary: DashboardSummary = {
   pending_shares_net: 0,
 }
 
-function dueLabel(iso: string, language: string): string {
-  return format(parseISO(iso), 'dd MMM', { locale: resolveDateFnsLocale(language) })
-}
-
 function DashboardHarness() {
   const { pathname } = useLocation()
   return (
@@ -141,21 +137,19 @@ describe('Dashboard open bills', () => {
   it('shows open bills in English with mask, due date, account currency and a link', async () => {
     const { user } = renderWithProviders(<DashboardHarness />)
     const region = await screen.findByRole('region', { name: 'Open bills' })
-    const earliest = dueLabel('2026-10-15', 'en')
-    const later = dueLabel('2026-11-20', 'en')
 
     expect(await within(region).findByText(formatCurrency(140, 'USD', 'en-US'))).toBeInTheDocument()
-    expect(within(region).getByText(t('dashboard.openBillsSubtitle', { count: 2, date: earliest }))).toBeInTheDocument()
+    expect(within(region).getByText(`2 cards · due ${format(parseISO('2026-10-15'), 'dd MMM', { locale: resolveDateFnsLocale('en') })}`)).toBeInTheDocument()
 
     const alpha = within(region).getByRole('link', { name: /Alpha/ })
     expect(alpha).toHaveTextContent('•••• 1234')
-    expect(alpha).toHaveTextContent(t('dashboard.openBillsDue', { date: earliest }))
+    expect(alpha).toHaveTextContent(`due ${format(parseISO('2026-10-15'), 'dd MMM', { locale: resolveDateFnsLocale('en') })}`)
     expect(alpha).toHaveTextContent(formatCurrency(80, 'EUR', 'en-US'))
     expect(alpha).toHaveAttribute('href', '/accounts/card-a')
 
     const beta = within(region).getByRole('link', { name: /Beta/ })
     expect(beta).not.toHaveTextContent('••••')
-    expect(beta).toHaveTextContent(t('dashboard.openBillsDue', { date: later }))
+    expect(beta).toHaveTextContent(`due ${format(parseISO('2026-11-20'), 'dd MMM', { locale: resolveDateFnsLocale('en') })}`)
     expect(beta).toHaveTextContent(formatCurrency(40, 'USD', 'en-US'))
     expect(beta).toHaveAttribute('href', '/accounts/card-b')
 
@@ -167,12 +161,9 @@ describe('Dashboard open bills', () => {
     await i18n.changeLanguage('pt-BR')
     renderWithProviders(<DashboardHarness />)
     const region = await screen.findByRole('region', { name: 'Faturas em aberto' })
-    const earliest = dueLabel('2026-10-15', 'pt-BR')
 
-    expect(await within(region).findByText(t('dashboard.openBillsSubtitle', { count: 2, date: earliest }))).toBeInTheDocument()
-    expect(within(region).getByRole('link', { name: /Alpha/ })).toHaveTextContent(
-      t('dashboard.openBillsDue', { date: earliest }),
-    )
+    expect(await within(region).findByText(`2 cartões · vence ${format(parseISO('2026-10-15'), 'dd MMM', { locale: resolveDateFnsLocale('pt-BR') })}`)).toBeInTheDocument()
+    expect(within(region).getByRole('link', { name: /Alpha/ })).toHaveTextContent(`vence ${format(parseISO('2026-10-15'), 'dd MMM', { locale: resolveDateFnsLocale('pt-BR') })}`)
   })
 
   it('hides the block when there are no open bills', async () => {
@@ -225,12 +216,11 @@ describe('Dashboard open bills', () => {
     rerender(<DashboardHarness />)
 
     const filtered = await screen.findByRole('region', { name: 'Open bills' })
-    const later = dueLabel('2026-11-20', 'en')
     expect(within(filtered).queryByRole('link', { name: /Alpha/ })).not.toBeInTheDocument()
     expect(within(filtered).getByRole('link', { name: /Beta/ })).toHaveAttribute('href', '/accounts/card-b')
     expect(within(filtered).queryByText(formatCurrency(140, 'USD', 'en-US'))).not.toBeInTheDocument()
     expect(within(filtered).queryByText(formatCurrency(80, 'EUR', 'en-US'))).not.toBeInTheDocument()
     expect(within(filtered).getAllByText(formatCurrency(40, 'USD', 'en-US')).length).toBeGreaterThan(0)
-    expect(within(filtered).getByText(t('dashboard.openBillsSubtitle', { count: 1, date: later }))).toBeInTheDocument()
+    expect(within(filtered).getByText(`1 cards · due ${format(parseISO('2026-11-20'), 'dd MMM', { locale: resolveDateFnsLocale('en') })}`)).toBeInTheDocument()
   })
 })

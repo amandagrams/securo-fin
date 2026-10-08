@@ -264,9 +264,8 @@ describe('estado da fatura e valor estimado', () => {
     api.accounts.bills.mockResolvedValue(pastBills)
     await renderPage()
 
-    const sentence = 'Open bill · closes 9/30/2026 · due 10/10/2026'
-    expect(screen.getByText(sentence)).toBeTruthy()
-    expect(cycleHeader().parentElement?.parentElement?.textContent).toContain(sentence)
+    expect(screen.getByText('Open bill · closes 9/30/2026 · due 10/10/2026')).toBeTruthy()
+    expect(cycleHeader().parentElement?.parentElement?.textContent).toContain('Open bill · closes 9/30/2026 · due 10/10/2026')
     const closeLabel = screen.getByText(i18n.t('accounts.statementCloseDay'))
     expect(closeLabel.parentElement?.textContent).toContain('9/30/2026')
   })
@@ -311,9 +310,8 @@ describe('estado da fatura e valor estimado', () => {
     mockSummary({ bill_purchases: 120, bill_refunds: 0, projected_expenses: 120 })
     await renderPage()
 
-    const estimate = "Estimated — the bank hasn't closed this bill yet; we add up the charges it has sent"
     const card = billTotalCardText()
-    expect(card.indexOf(estimate)).toBeGreaterThan(card.indexOf('R$120.00'))
+    expect(card.indexOf("Estimated — the bank hasn't closed this bill yet; we add up the charges it has sent")).toBeGreaterThan(card.indexOf('R$120.00'))
   })
 
   it('hides the estimated notice when a bill anchors the cycle', async () => {

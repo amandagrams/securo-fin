@@ -119,12 +119,11 @@ describe('saldos do calendário', () => {
       )
 
       const actual = screen.getByTestId('actual-balance')
-      expect(actual.textContent).toContain(i18n.t('transactions.calendarActualBalance'))
+      expect(actual.textContent).toContain(language === 'pt-BR' ? 'Saldo real' : 'Actual balance')
       expect(actual.textContent).toContain(formatCurrency(1000, 'BRL', displayLocale))
 
       const captions = screen.getAllByTestId('projected-balance').map((element) => element.textContent ?? '')
-      const label = i18n.t('transactions.calendarProjectedBalance')
-      expect(captions.every((text) => text.includes(label))).toBe(true)
+      expect(captions.every((text) => text.includes(language === 'pt-BR' ? 'Saldo previsto' : 'Projected balance'))).toBe(true)
       expect(captions.filter((text) => text.includes(formatCurrency(1000, 'BRL', displayLocale)))).toHaveLength(2)
       expect(captions.filter((text) => text.includes(formatCurrency(750, 'BRL', displayLocale)))).toHaveLength(6)
 
