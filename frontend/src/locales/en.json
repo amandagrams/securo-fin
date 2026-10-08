@@ -1625,7 +1625,18 @@
     "hideWithRulesTitle": "Hide {{name}}?",
     "hideWithRulesDescription": "{{count}} active rules assign this category. Hiding it already stops them from categorizing new transactions. Turning them off stops the whole rule, including any payee or notes it also sets.",
     "hideKeepRules": "Hide only",
-    "hideAndTurnOffRules": "Hide and turn off the rules"
+    "hideAndTurnOffRules": "Hide and turn off the rules",
+    "monthOutflows": "Outflows by category",
+    "monthInflows": "Inflows by category",
+    "uncategorized": "Uncategorized",
+    "noCategoryFound": "No category found",
+    "noOutflows": "No outflows this month",
+    "noInflows": "No inflows this month",
+    "automaticRules": "Automatic rules",
+    "newCategoryAction": "New category",
+    "flowSearch": "Search categories",
+    "previousMonth": "Previous month",
+    "nextMonth": "Next month"
   },
   "groups": {
     "title": "Category Groups",

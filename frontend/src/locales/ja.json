@@ -1625,7 +1625,18 @@
     "hideWithRulesTitle": "{{name}}を非表示にしますか?",
     "hideWithRulesDescription": "{{count}}件の有効なルールがこのカテゴリを割り当てています。非表示にするだけでも新しい取引の分類は停止されます。ルールを無効にすると、取引相手やメモの設定を含むルール全体が停止されます。",
     "hideKeepRules": "非表示のみ",
-    "hideAndTurnOffRules": "非表示にしてルールを無効化"
+    "hideAndTurnOffRules": "非表示にしてルールを無効化",
+    "monthOutflows": "カテゴリ別の支出",
+    "monthInflows": "カテゴリ別の収入",
+    "uncategorized": "未分類",
+    "noCategoryFound": "カテゴリが見つかりません",
+    "noOutflows": "今月の支出はありません",
+    "noInflows": "今月の収入はありません",
+    "automaticRules": "自動ルール",
+    "newCategoryAction": "新しいカテゴリ",
+    "flowSearch": "カテゴリを検索",
+    "previousMonth": "前の月",
+    "nextMonth": "次の月"
   },
   "groups": {
     "title": "カテゴリグループ",

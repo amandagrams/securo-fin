@@ -1629,7 +1629,18 @@
     "hideWithRulesTitle": "Masquer {{name}} ?",
     "hideWithRulesDescription": "{{count}} règles actives attribuent cette catégorie. La masquer les empêche déjà de catégoriser de nouvelles transactions. Les désactiver arrête la règle entière, y compris le bénéficiaire ou les notes qu’elle définit aussi.",
     "hideKeepRules": "Masquer seulement",
-    "hideAndTurnOffRules": "Masquer et désactiver les règles"
+    "hideAndTurnOffRules": "Masquer et désactiver les règles",
+    "monthOutflows": "Sorties par catégorie",
+    "monthInflows": "Entrées par catégorie",
+    "uncategorized": "Sans catégorie",
+    "noCategoryFound": "Aucune catégorie trouvée",
+    "noOutflows": "Aucune sortie ce mois-ci",
+    "noInflows": "Aucune entrée ce mois-ci",
+    "automaticRules": "Règles automatiques",
+    "newCategoryAction": "Nouvelle catégorie",
+    "flowSearch": "Rechercher des catégories",
+    "previousMonth": "Mois précédent",
+    "nextMonth": "Mois suivant"
   },
   "groups": {
     "title": "Groupes de catégories",

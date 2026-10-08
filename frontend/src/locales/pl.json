@@ -1696,7 +1696,18 @@
     "hideWithRulesTitle": "Ukryć {{name}}?",
     "hideWithRulesDescription": "Tę kategorię przypisuje {{count}} aktywnych reguł. Ukrycie jej już powstrzymuje je przed kategoryzowaniem nowych transakcji. Wyłączenie zatrzymuje całą regułę, w tym odbiorcę i notatki, które również ustawia.",
     "hideKeepRules": "Tylko ukryj",
-    "hideAndTurnOffRules": "Ukryj i wyłącz reguły"
+    "hideAndTurnOffRules": "Ukryj i wyłącz reguły",
+    "monthOutflows": "Wydatki według kategorii",
+    "monthInflows": "Wpływy według kategorii",
+    "uncategorized": "Bez kategorii",
+    "noCategoryFound": "Nie znaleziono kategorii",
+    "noOutflows": "Brak wydatków w tym miesiącu",
+    "noInflows": "Brak wpływów w tym miesiącu",
+    "automaticRules": "Reguły automatyczne",
+    "newCategoryAction": "Nowa kategoria",
+    "flowSearch": "Szukaj kategorii",
+    "previousMonth": "Poprzedni miesiąc",
+    "nextMonth": "Następny miesiąc"
   },
   "groups": {
     "title": "Grupy kategorii",

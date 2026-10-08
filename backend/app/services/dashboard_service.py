@@ -1982,3 +1982,111 @@ async def get_credit_card_bills(
         accounts_count=len(kept),
         earliest_due_date=earliest,
     )
+
+
+def _category_flow_items(rows: list[dict]) -> list:
+    """Posted rows only, largest total first. Percentage is the row's share of this list."""
+    from app.schemas.dashboard import CategoryFlowItem
+
+    posted = [row for row in rows if row["total"] > 0]
+    posted.sort(key=lambda row: row["total"], reverse=True)
+    grand = sum(row["total"] for row in posted)
+    return [
+        CategoryFlowItem(
+            category_id=row["category_id"],
+            category_name=row["name"],
+            category_icon=row["icon"],
+            category_color=row["color"],
+            total=row["total"],
+            percentage=round(row["total"] / grand * 100, 2) if grand else 0.0,
+        )
+        for row in posted
+    ]
+
+
+async def _posted_credit_category_rows(
+    session: AsyncSession,
+    workspace_id: uuid.UUID,
+    month: date,
+) -> list[dict]:
+    """Income by category using the spending filters with type credit.
+
+    Same window as ``get_spending_by_category`` (reporting date, posted, open
+    accounts, ``counts_as_user_pnl``, nothing after today). Recurring
+    projections and pending rows stay out — those ride on ``projected_total``
+    for debits and are not part of this card.
+    """
+    month_start, month_end = _month_range(month)
+    today = app_today()
+    accounting_mode = await get_credit_card_accounting_mode(session)
+    report_date = reporting_date_col(accounting_mode)
+    result = await session.execute(
+        select(
+            Category.id,
+            Category.name,
+            Category.icon,
+            Category.color,
+            func.sum(_primary_amount_expr()),
+        )
+        .select_from(Transaction)
+        .join(Account, Transaction.account_id == Account.id)
+        .outerjoin(Category, Transaction.category_id == Category.id)
+        .where(
+            Transaction.workspace_id == workspace_id,
+            Account.is_closed == False,
+            Transaction.type == "credit",
+            report_date >= month_start,
+            report_date < month_end,
+            report_date <= today,
+            Transaction.status == "posted",
+            counts_as_user_pnl(),
+        )
+        .group_by(Category.id, Category.name, Category.icon, Category.color)
+    )
+    rows = []
+    for row in result.all():
+        rows.append(
+            {
+                "category_id": str(row[0]) if row[0] else None,
+                "name": row[1] or "Sem categoria",
+                "icon": row[2] or "circle-help",
+                "color": row[3] or "#6B7280",
+                "total": abs(float(row[4] or 0)),
+            }
+        )
+    return rows
+
+
+async def get_category_flows(
+    session: AsyncSession,
+    workspace_id: uuid.UUID,
+    user_id: uuid.UUID,
+    month: Optional[date] = None,
+):
+    """Posted outflows and inflows for one month, in the user's primary currency.
+
+    Each outflow total is the posted total ``get_spending_by_category`` already
+    returns for that category, so rateio adjustments stay in lockstep with the
+    dashboard. Inflows use those same filters with type credit.
+    """
+    from app.schemas.dashboard import CategoryFlows
+
+    if not month:
+        month = app_today().replace(day=1)
+    spending = await get_spending_by_category(session, workspace_id, user_id, month)
+    outflows = _category_flow_items(
+        [
+            {
+                "category_id": item.category_id,
+                "name": item.category_name,
+                "icon": item.category_icon,
+                "color": item.category_color,
+                "total": item.total,
+            }
+            for item in spending
+        ]
+    )
+    inflows = _category_flow_items(
+        await _posted_credit_category_rows(session, workspace_id, month)
+    )
+    return CategoryFlows(outflows=outflows, inflows=inflows)

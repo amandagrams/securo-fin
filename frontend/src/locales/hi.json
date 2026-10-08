@@ -1625,7 +1625,18 @@
     "hideWithRulesTitle": "{{name}} छिपाएँ?",
     "hideWithRulesDescription": "{{count}} सक्रिय नियम इस श्रेणी को सौंपते हैं। इसे छिपाना उन्हें नए लेन-देन वर्गीकृत करने से पहले ही रोक देता है। उन्हें बंद करना पूरे नियम को रोक देता है, जिसमें वह प्राप्तकर्ता या नोट्स भी शामिल हैं जो यह सेट करता है।",
     "hideKeepRules": "केवल छिपाएँ",
-    "hideAndTurnOffRules": "छिपाएँ और नियम बंद करें"
+    "hideAndTurnOffRules": "छिपाएँ और नियम बंद करें",
+    "monthOutflows": "श्रेणी के अनुसार खर्च",
+    "monthInflows": "श्रेणी के अनुसार आय",
+    "uncategorized": "बिना श्रेणी",
+    "noCategoryFound": "कोई श्रेणी नहीं मिली",
+    "noOutflows": "इस महीने कोई खर्च नहीं",
+    "noInflows": "इस महीने कोई आय नहीं",
+    "automaticRules": "स्वचालित नियम",
+    "newCategoryAction": "नई श्रेणी",
+    "flowSearch": "श्रेणियाँ खोजें",
+    "previousMonth": "पिछला महीना",
+    "nextMonth": "अगला महीना"
   },
   "groups": {
     "title": "श्रेणी समूह",

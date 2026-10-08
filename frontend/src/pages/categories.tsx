@@ -20,6 +20,7 @@ import {
 import type { Category, CategoryGroup, CategoryUsage } from '@/types'
 import { Pencil, Trash2, Plus, ChevronDown, ChevronRight, ChevronsUpDown, Eye, EyeOff } from 'lucide-react'
 import { PageHeader } from '@/components/page-header'
+import { CategoryMonthFlows } from '@/components/category-month-flows'
 import { invalidateCategoryQueries } from '@/lib/invalidate-queries'
 import { CategoryIcon } from '@/components/category-icon'
 import { CategorySelect } from '@/components/category-select'
@@ -319,6 +320,8 @@ export default function CategoriesPage() {
       <p className="mb-4 text-sm text-muted-foreground">
         {t('categories.hiddenScopeDescription')}
       </p>
+
+      <CategoryMonthFlows canWrite={canWrite} onCreateCategory={() => openCatDialog(null)} />
 
       <SectionCard>
         <SectionHeader
