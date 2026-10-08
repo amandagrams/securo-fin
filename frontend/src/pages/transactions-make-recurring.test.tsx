@@ -51,9 +51,24 @@ vi.mock('@/hooks/use-mobile', () => ({ useIsMobile: () => false }))
 vi.mock('@/contexts/auth-context', () => ({
   useAuth: () => ({ user: { preferences: { currency_display: 'BRL' } } }),
 }))
-vi.mock('@/contexts/workspace-context', () => ({
-  useWorkspace: () => ({ canWrite: true, hasModule: () => false }),
-}))
+vi.mock('@/contexts/workspace-context', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/contexts/workspace-context')>()
+  return {
+    ...actual,
+    useWorkspace: () => ({
+      current: null,
+      workspaces: [],
+      isLoading: false,
+      switchWorkspace: async () => {},
+      refresh: async () => {},
+      role: 'owner' as const,
+      canManage: true,
+      canWrite: true,
+      enabledModules: [],
+      hasModule: () => false,
+    }),
+  }
+})
 vi.mock('@/contexts/collection-filter-context', () => ({
   useCollectionFilter: () => ({
     collections: [],
@@ -212,7 +227,7 @@ describe('mark a transaction recurring', () => {
     ]
     for (const copy of copies) {
       await i18n.changeLanguage(copy.checkbox === 'Make recurring' ? 'en' : 'pt-BR')
-      await user.click(screen.getByRole('button', { name: copy.add }))
+      await user.click(screen.getByRole('button', { name: new RegExp(copy.add) }))
       const createDialog = await screen.findByRole('dialog')
       const createBox = within(createDialog).getByRole('checkbox', { name: copy.checkbox })
       expect(createBox).not.toBeChecked()
@@ -281,7 +296,7 @@ describe('mark a transaction recurring', () => {
     const { user, queryClient } = renderPage()
     await screen.findByText('No transactions found')
     await waitFor(() => expect(queryClient.getQueryData(['accounts'])).toEqual(ACCOUNTS))
-    await user.click(screen.getByRole('button', { name: 'Add Transaction' }))
+    await user.click(screen.getByRole('button', { name: /Add Transaction/ }))
     const dialog = await screen.findByRole('dialog')
     const textboxes = within(dialog).getAllByRole('textbox')
     await user.type(textboxes[0], 'Manual rent')
@@ -308,7 +323,11 @@ describe('mark a transaction recurring', () => {
     const dialog = await screen.findByRole('dialog')
     await user.click(within(dialog).getByRole('checkbox', { name: 'Make recurring' }))
 
-    const frequency = within(dialog).getByDisplayValue('monthly') as HTMLSelectElement
+    const frequency = within(dialog).getAllByRole('combobox').find((element) =>
+      [...(element as HTMLSelectElement).options].some((option) => option.value === 'semiannual'),
+    ) as HTMLSelectElement
+    expect(frequency).toBeTruthy()
+    expect(frequency.value).toBe('monthly')
     expect([...frequency.options].map((option) => [option.value, option.text])).toEqual([
       ['monthly', 'Monthly'],
       ['quarterly', 'Quarterly'],

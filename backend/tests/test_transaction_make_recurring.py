@@ -9,6 +9,7 @@ from decimal import Decimal
 
 import pytest
 from httpx import AsyncClient
+from sqlalchemy import inspect as sa_inspect
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -23,6 +24,20 @@ from app.models.user import User
 from app.models.workspace import Workspace
 
 
+def _pk(obj) -> uuid.UUID:
+    """Primary key without a lazy load. expire_all() drops attributes, and
+    reading them from an async test raises MissingGreenlet."""
+    ident = sa_inspect(obj).identity
+    assert ident is not None
+    return ident[0]
+
+
+async def _reload(session: AsyncSession, *objs) -> None:
+    for obj in objs:
+        if sa_inspect(obj).expired:
+            await session.refresh(obj)
+
+
 async def _account(
     session: AsyncSession,
     user: User,
@@ -31,6 +46,7 @@ async def _account(
     connection_id: uuid.UUID | None = None,
     workspace_id: uuid.UUID | None = None,
 ) -> Account:
+    await _reload(session, user)
     account = Account(
         id=uuid.uuid4(),
         user_id=user.id,
@@ -52,6 +68,7 @@ async def _transaction(
     account: Account,
     **overrides,
 ) -> Transaction:
+    await _reload(session, user, account)
     tx = Transaction(
         id=overrides.pop("id", uuid.uuid4()),
         user_id=user.id,
@@ -156,15 +173,17 @@ async def test_synced_credit_card_links_without_changing_posted_fields(
     assert again["source"] == "sync"
     assert again["bill_id"] == str(bill.id)
 
+    tx_id = _pk(tx)
+    bill_id = _pk(bill)
     session.expire_all()
-    stored = await session.get(Transaction, tx.id)
+    stored = await session.get(Transaction, tx_id)
     assert stored is not None
     assert str(stored.recurring_transaction_id) == body["recurring_transaction_id"]
     assert stored.date == date(2026, 10, 7)
     assert stored.amount == Decimal("49.90")
     assert stored.status == "posted"
     assert stored.source == "sync"
-    assert stored.bill_id == bill.id
+    assert stored.bill_id == bill_id
 
 
 async def test_rule_copies_the_transaction_and_is_listed(
@@ -278,11 +297,12 @@ async def test_monthly_without_day_projects_only_the_next_month(
     assert rules[0].next_occurrence == date(2026, 11, 7)
     assert rules[0].day_of_month is None
 
+    account_id = _pk(account)
     session.expire_all()
     charges = (
         await session.execute(
             select(Transaction).where(
-                Transaction.account_id == account.id,
+                Transaction.account_id == account_id,
                 Transaction.description == "Streaming",
                 Transaction.date == date(2026, 10, 7),
             )
@@ -292,7 +312,7 @@ async def test_monthly_without_day_projects_only_the_next_month(
 
     projected = await client.get(
         "/api/dashboard/projected-transactions",
-        params={"account_id": str(account.id), "from": "2026-10-01", "to": "2026-11-30"},
+        params={"account_id": str(account_id), "from": "2026-10-01", "to": "2026-11-30"},
         headers=auth_headers,
     )
     assert projected.status_code == 200
@@ -507,12 +527,14 @@ async def test_failed_link_leaves_no_recurring_row(
         return await real_commit(self, *args, **kwargs)
 
     monkeypatch.setattr(AsyncSessionCls, "commit", commit_that_refuses_the_link)
-    response = await _post(client, auth_headers, tx.id, {"frequency": "monthly"})
-    assert response.status_code >= 400
-    assert response.status_code != 201
+    tx_id = _pk(tx)
+    # The refused commit is not turned into an HTTP body: the link and the
+    # rule share one transaction, so the error leaves the request.
+    with pytest.raises(IntegrityError):
+        await _post(client, auth_headers, tx_id, {"frequency": "monthly"})
 
     session.expire_all()
-    stored = await session.get(Transaction, tx.id)
+    stored = await session.get(Transaction, tx_id)
     assert stored is not None
     assert stored.recurring_transaction_id is None
     assert await _rules(session, "Rollback charge", date(2026, 10, 7)) == []
