@@ -5,11 +5,9 @@
  * números vêm do payload e de upcoming-bills; o teste não calcula fatura.
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { format, parseISO } from 'date-fns'
 import { cleanup, screen, waitFor, within } from '@testing-library/react'
 
 import { utilizationColor } from '@/lib/credit-utilization'
-import { resolveDateFnsLocale } from '@/lib/date-fns-locale'
 import { formatCurrency } from '@/lib/format'
 import i18n from '@/lib/i18n'
 import AccountsPage from '@/pages/accounts'
@@ -131,20 +129,6 @@ function barWidth(limit: number, available: number) {
 
 function compact(value: string | null | undefined) {
   return (value ?? '').replace(/\s/g, '')
-}
-
-function billDate(iso: string, language: string) {
-  return format(parseISO(`${iso}T00:00:00`), 'dd MMM', {
-    locale: resolveDateFnsLocale(language),
-  })
-}
-
-function openLine(close: string, due: string) {
-  return i18n.t('accounts.listBillOpen', { close: billDate(close, i18n.language), due: billDate(due, i18n.language) })
-}
-
-function closedLine(due: string) {
-  return i18n.t('accounts.listBillClosed', { due: billDate(due, i18n.language) })
 }
 
 function futureLine(total: number, currency = 'BRL') {
@@ -357,13 +341,11 @@ describe('cartão na lista de contas', () => {
     ])
 
     const future = await screen.findByRole('link', { name: /Fecha futura/ })
-    const futureLine = within(future).getByText(openLine('2026-10-15', '2026-10-22'))
-    expect(futureLine.textContent).toBe(openLine('2026-10-15', '2026-10-22'))
-    expect(within(future).getByText(i18n.t('accounts.dueIn', { count: 14 }))).toBeTruthy()
+    expect(within(future).getByText('fatura aberta · fecha em 15 out · vence em 22 out').textContent).toBe('fatura aberta · fecha em 15 out · vence em 22 out')
+    expect(within(future).getByText('Vence em 14 dias')).toBeTruthy()
 
     const today = linkOf(/Fecha hoje/)
-    const todayLine = within(today).getByText(openLine('2026-10-08', '2026-10-20'))
-    expect(todayLine.textContent).toBe(openLine('2026-10-08', '2026-10-20'))
+    expect(within(today).getByText('fatura aberta · fecha em 08 out · vence em 20 out').textContent).toBe('fatura aberta · fecha em 08 out · vence em 20 out')
   })
 
   it('shows the open bill line in English when the close date is today or later', async () => {
@@ -390,15 +372,11 @@ describe('cartão na lista de contas', () => {
     ])
 
     const future = await screen.findByRole('link', { name: /Closes later/ })
-    expect(within(future).getByText(openLine('2026-10-15', '2026-10-22')).textContent).toBe(
-      openLine('2026-10-15', '2026-10-22'),
-    )
+    expect(within(future).getByText('open bill · closes 15 Oct · due 22 Oct').textContent).toBe('open bill · closes 15 Oct · due 22 Oct')
     expect(within(future).getByText('Due in 14 days')).toBeTruthy()
 
     const today = linkOf(/Closes today/)
-    expect(within(today).getByText(openLine('2026-10-08', '2026-10-20')).textContent).toBe(
-      openLine('2026-10-08', '2026-10-20'),
-    )
+    expect(within(today).getByText('open bill · closes 08 Oct · due 20 Oct').textContent).toBe('open bill · closes 08 Oct · due 20 Oct')
   })
 
   it('shows the closed bill line in pt-BR when the close date is past', async () => {
@@ -415,10 +393,10 @@ describe('cartão na lista de contas', () => {
     ])
 
     const link = await screen.findByRole('link', { name: /Fecha passada/ })
-    const line = within(link).getByText(closedLine('2026-10-18'))
-    expect(line.textContent).toBe(closedLine('2026-10-18'))
-    expect(line.textContent).not.toContain(billDate('2026-10-07', 'pt-BR'))
-    expect(within(link).getByText(i18n.t('accounts.dueIn', { count: 10 }))).toBeTruthy()
+    const line = within(link).getByText('fatura fechada · vence em 18 out')
+    expect(line.textContent).toBe('fatura fechada · vence em 18 out')
+    expect(line.textContent).not.toContain('07 out')
+    expect(within(link).getByText('Vence em 10 dias')).toBeTruthy()
   })
 
   it('shows the closed bill line in English when the close date is past', async () => {
@@ -436,9 +414,9 @@ describe('cartão na lista de contas', () => {
     ])
 
     const link = await screen.findByRole('link', { name: /Already closed/ })
-    const line = within(link).getByText(closedLine('2026-10-18'))
-    expect(line.textContent).toBe(closedLine('2026-10-18'))
-    expect(line.textContent).not.toContain(billDate('2026-10-07', 'en'))
+    const line = within(link).getByText('closed bill · due 18 Oct')
+    expect(line.textContent).toBe('closed bill · due 18 Oct')
+    expect(line.textContent).not.toContain('07 Oct')
     expect(within(link).getByText('Due in 10 days')).toBeTruthy()
   })
 
@@ -489,8 +467,8 @@ describe('cartão na lista de contas', () => {
     for (const link of [missingCloseDay, missingDueDay, linkOf(/Sem data de fecha/), linkOf(/Sem data de vence/)]) {
       expect(within(link).queryByText(/fatura aberta|fatura fechada|listBillOpen|listBillClosed/)).toBeNull()
     }
-    expect(within(missingCloseDay).getByText(i18n.t('accounts.dueIn', { count: 10 }))).toBeTruthy()
-    expect(within(missingDueDay).getByText(i18n.t('accounts.dueIn', { count: 10 }))).toBeTruthy()
+    expect(within(missingCloseDay).getByText('Vence em 10 dias')).toBeTruthy()
+    expect(within(missingDueDay).getByText('Vence em 10 dias')).toBeTruthy()
   })
 
   it('shows future installments in pt-BR', async () => {
@@ -570,7 +548,7 @@ describe('cartão na lista de contas', () => {
 
     expect(await screen.findByRole('link', { name: /Manual/ })).toBeTruthy()
     await waitFor(() => {
-      const lines = [...document.querySelectorAll('p')].filter((el) => el.textContent === futureLine(12840.72))
+      const lines = [...document.querySelectorAll('p')].filter((el) => (el.textContent ?? '').includes('em parcelas futuras entram nas próximas faturas'))
       expect(lines).toHaveLength(2)
     })
     for (const [name, id] of [['Manual', 'manual-1'], ['Conectado', 'bank-1']] as const) {
@@ -578,8 +556,8 @@ describe('cartão na lista de contas', () => {
       expect(link).toHaveAttribute('href', `/accounts/${id}`)
       expect(within(link.parentElement as HTMLElement).getAllByRole('link')).toHaveLength(1)
       const bar = within(link).getByRole('progressbar')
-      const state = within(link).getByText(openLine('2026-10-15', '2026-10-22'))
-      const future = nodeWithText(link, futureLine(12840.72))
+      const state = within(link).getByText('fatura aberta · fecha em 15 out · vence em 22 out')
+      const future = within(link).getByText(/em parcelas futuras entram nas próximas faturas/)
       expect(bar.compareDocumentPosition(state) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
       expect(state.compareDocumentPosition(future) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
     }
