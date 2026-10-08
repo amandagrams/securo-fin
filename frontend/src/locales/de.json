@@ -1223,6 +1223,8 @@
     "billClosedDue": "Geschlossene Rechnung · geschlossen {{close}} · fällig {{due}}",
     "billClosedWasDue": "Geschlossene Rechnung · geschlossen {{close}} · war fällig {{due}}",
     "billEstimated": "Geschätzt — die Bank hat diese Rechnung noch nicht geschlossen; wir summieren die Buchungen, die sie schon geschickt hat",
+    "upcomingBills": "Kommende Rechnungen",
+    "upcomingBillsEstimate": "Schätzung aus bekannten Raten und Buchungen",
     "cardNames": "Kartennamen",
     "noCardsSeen": "Auf diesem Konto wurde noch keine Karte gesehen.",
     "currentTag": "jetzt",

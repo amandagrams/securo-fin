@@ -1222,6 +1222,8 @@
     "billClosedDue": "Closed bill · closed {{close}} · due {{due}}",
     "billClosedWasDue": "Closed bill · closed {{close}} · was due {{due}}",
     "billEstimated": "Estimated — the bank hasn't closed this bill yet; we add up the charges it has sent",
+    "upcomingBills": "Upcoming bills",
+    "upcomingBillsEstimate": "estimate from known installments and charges",
     "cardNames": "Card names",
     "noCardsSeen": "No card has been seen on this account yet.",
     "currentTag": "now",

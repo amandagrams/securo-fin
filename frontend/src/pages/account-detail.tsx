@@ -21,6 +21,7 @@ import { ArrowLeft, ArrowLeftRight, CalendarClock, ChevronLeft, ChevronRight, Cl
 import { MobileTransactionRow } from '@/components/mobile-transaction-row'
 import { CategoryIcon } from '@/components/category-icon'
 import { ProjectedTransactionBadge } from '@/components/projected-transaction-badge'
+import { UpcomingBillsSection } from '@/components/upcoming-bills-section'
 import { TransactionDialog, type RecurringSaveInput, type TransactionSavePayload } from '@/components/transaction-dialog'
 import { extractApiError } from '@/lib/api-errors'
 import { TransferDialog } from '@/components/transfer-dialog'
@@ -1236,6 +1237,15 @@ export default function AccountDetailPage() {
           </div>
         )
       })()}
+
+      <UpcomingBillsSection
+        accountId={account.id}
+        accountType={account.type}
+        currency={account.currency}
+        showPrimary={showPrimary}
+        primaryCurrency={userCurrency}
+        locale={locale}
+      />
 
       {/* Compact stat bar */}
       {isCreditCard ? (() => {

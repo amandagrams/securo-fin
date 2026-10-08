@@ -1222,6 +1222,8 @@
     "billClosedDue": "बंद बिल · बंद हुआ {{close}} · देय {{due}}",
     "billClosedWasDue": "बंद बिल · बंद हुआ {{close}} · देय था {{due}}",
     "billEstimated": "अनुमान — बैंक ने यह बिल अभी बंद नहीं किया; हम वही खर्च जोड़ते हैं जो वह भेज चुका है",
+    "upcomingBills": "आगामी बिल",
+    "upcomingBillsEstimate": "ज्ञात किस्तों और शुल्कों से अनुमान",
     "cardNames": "कार्ड के नाम",
     "noCardsSeen": "इस खाते पर अभी तक कोई कार्ड नहीं देखा गया।",
     "currentTag": "अभी",

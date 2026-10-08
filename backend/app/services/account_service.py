@@ -21,7 +21,12 @@ from app.services._query_filters import (
     is_inside_provider_snapshot,
     is_not_future,
 )
-from app.services.credit_card_service import apply_effective_date, compute_available_credit, get_cycle_dates
+from app.services.credit_card_service import (
+    apply_effective_date,
+    compute_available_credit,
+    compute_effective_date,
+    get_cycle_dates,
+)
 from app.models.category import Category
 
 
@@ -274,6 +279,206 @@ async def get_credit_card_bills(
         .limit(limit)
     )
     return list(result.scalars().all())
+
+
+def _installment_series_groups(rows: list[Transaction]) -> list[list[Transaction]]:
+    """The two series identities `_get_series_transactions` already uses.
+
+    A row with `installment_series_id` belongs only to that id (manual series
+    from `create_installment_series`). A row without it belongs to the sync
+    fingerprint `(account_id, installment_purchase_date, total_installments)`,
+    which deliberately does not include `installment_number` — that field
+    identifies one parcel, not the series.
+    """
+    by_id: dict[uuid.UUID, list[Transaction]] = {}
+    by_fingerprint: dict[tuple, list[Transaction]] = {}
+    for tx in rows:
+        if tx.installment_number is None:
+            continue
+        if tx.installment_series_id is not None:
+            by_id.setdefault(tx.installment_series_id, []).append(tx)
+        elif tx.total_installments is not None and tx.installment_purchase_date is not None:
+            key = (tx.account_id, tx.installment_purchase_date, tx.total_installments)
+            by_fingerprint.setdefault(key, []).append(tx)
+    return [*by_id.values(), *by_fingerprint.values()]
+
+
+def _cycle_due_of(tx: Transaction, close_day: int, due_day: int) -> _Date:
+    """Which bill due date this row belongs to.
+
+    Same precedence as `apply_effective_date`: a manual override, then the
+    linked bill's stored due date, then cycle math on the purchase date.
+    """
+    if tx.effective_bill_date is not None:
+        return tx.effective_bill_date
+    if tx.bill_id is not None and tx.effective_date is not None:
+        return tx.effective_date
+    return compute_effective_date(tx.date, close_day, due_day)
+
+
+def _future_cycles(
+    close_day: int, due_day: int, current_due: _Date, count: int,
+) -> list[tuple[_Date, _Date]]:
+    """The next `count` cycles after `current_due`, via `get_cycle_dates`."""
+    cycles: list[tuple[_Date, _Date]] = []
+    due = current_due
+    for _ in range(count):
+        nxt = get_cycle_dates(close_day, due_day, due + timedelta(days=1))
+        due = nxt["next_due_date"]
+        close = nxt["next_close_date"]
+        cycles.append((due, close))
+    return cycles
+
+
+def _money(amount: Decimal) -> float:
+    return float(amount.quantize(Decimal("0.01")))
+
+
+def _signed(amount: Decimal, tx_type: str) -> Decimal:
+    """Bill sign: a debit adds what is owed, a credit (refund) subtracts it."""
+    magnitude = abs(amount)
+    return magnitude if tx_type == "debit" else -magnitude
+
+
+async def get_upcoming_bills(
+    session: AsyncSession,
+    account_id: uuid.UUID,
+    workspace_id: uuid.UUID,
+    primary_currency: str,
+    *,
+    cycles: int,
+) -> Optional[dict]:
+    """Commitments on the cycles after the one in progress.
+
+    Returns None when the account is not in this workspace (caller → 404).
+    A non-card, or a card missing either cycle day, returns empty cycles and
+    null totals. Otherwise `cycles` entries (zeros included) and a future
+    total that is not cut off by that window. Projected parcels are not
+    inserted.
+    """
+    account = await get_account(session, account_id, workspace_id)
+    if account is None:
+        return None
+    empty = {
+        "cycles": [],
+        "future_committed_total": None,
+        "future_committed_total_primary": None,
+    }
+    close_day = account.statement_close_day
+    due_day = account.payment_due_day
+    if account.type != "credit_card" or close_day is None or due_day is None:
+        return empty
+
+    current_due = get_cycle_dates(close_day, due_day, app_today())["next_due_date"]
+    if current_due is None:
+        return empty
+
+    rows = list(
+        (
+            await session.execute(
+                select(Transaction).where(Transaction.account_id == account.id)
+            )
+        ).scalars().all()
+    )
+    on_bill = set(
+        (
+            await session.execute(
+                select(Transaction.id).where(
+                    Transaction.account_id == account.id,
+                    Transaction.source != "opening_balance",
+                    counts_on_bill(),
+                )
+            )
+        ).scalars().all()
+    )
+
+    def offset_of(due: _Date) -> Optional[int]:
+        """Months from the current due, or None when `due` is not a cycle due."""
+        if get_cycle_dates(close_day, due_day, due)["next_due_date"] != due:
+            return None
+        return (due.year - current_due.year) * 12 + (due.month - current_due.month)
+
+    def primary_magnitude(tx: Transaction) -> Decimal:
+        if tx.amount_primary is not None:
+            return abs(Decimal(tx.amount_primary))
+        if account.currency == primary_currency:
+            return abs(Decimal(tx.amount))
+        return abs(Decimal(tx.amount))
+
+    buckets: dict[int, list[Decimal]] = {}
+
+    def add(offset: Optional[int], account_amt: Decimal, primary_amt: Decimal) -> None:
+        if offset is None or offset <= 0:
+            return
+        slot = buckets.get(offset)
+        if slot is None:
+            slot = [Decimal("0"), Decimal("0")]
+            buckets[offset] = slot
+        slot[0] += account_amt
+        slot[1] += primary_amt
+
+    future_unmatched = [Decimal("0"), Decimal("0")]
+    for tx in rows:
+        if tx.id not in on_bill:
+            continue
+        due = _cycle_due_of(tx, close_day, due_day)
+        if due <= current_due:
+            continue
+        account_amt = _signed(Decimal(tx.amount), tx.type)
+        primary_amt = _signed(primary_magnitude(tx), tx.type)
+        offset = offset_of(due)
+        if offset is None:
+            future_unmatched[0] += account_amt
+            future_unmatched[1] += primary_amt
+            continue
+        add(offset, account_amt, primary_amt)
+
+    for group in _installment_series_groups(rows):
+        anchor = max(group, key=lambda tx: (tx.installment_number or 0, tx.date))
+        # The latest existing parcel is the one the user (or the bank) last
+        # shaped. An ignored anchor means the series stops there.
+        if anchor.is_ignored:
+            continue
+        total_n = anchor.total_installments or 0
+        anchor_number = anchor.installment_number or 0
+        if anchor_number >= total_n:
+            continue
+        anchor_due = _cycle_due_of(anchor, close_day, due_day)
+        anchor_offset = offset_of(anchor_due)
+        if anchor_offset is None:
+            continue
+        existing = {tx.installment_number for tx in group}
+        amount = abs(Decimal(anchor.amount))
+        primary_amount = primary_magnitude(anchor)
+        for number in range(anchor_number + 1, total_n + 1):
+            if number in existing:
+                continue
+            add(
+                anchor_offset + (number - anchor_number),
+                _signed(amount, anchor.type),
+                _signed(primary_amount, anchor.type),
+            )
+
+    future_total = future_unmatched[0] + sum((slot[0] for slot in buckets.values()), Decimal("0"))
+    future_primary = future_unmatched[1] + sum(
+        (slot[1] for slot in buckets.values()), Decimal("0")
+    )
+    listed = []
+    for due, close in _future_cycles(close_day, due_day, current_due, cycles):
+        offset = (due.year - current_due.year) * 12 + (due.month - current_due.month)
+        slot = buckets.get(offset, [Decimal("0"), Decimal("0")])
+        listed.append({
+            "due_date": due,
+            "close_date": close,
+            "committed_total": _money(slot[0]),
+            "committed_total_primary": _money(slot[1]),
+            "currency": account.currency,
+        })
+    return {
+        "cycles": listed,
+        "future_committed_total": _money(future_total),
+        "future_committed_total_primary": _money(future_primary),
+    }
 
 
 def _transaction_card_number():

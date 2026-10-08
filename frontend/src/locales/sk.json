@@ -1278,6 +1278,8 @@
     "billClosedDue": "Uzavretá faktúra · uzavretá {{close}} · splatnosť {{due}}",
     "billClosedWasDue": "Uzavretá faktúra · uzavretá {{close}} · bola splatná {{due}}",
     "billEstimated": "Odhad — banka túto faktúru ešte neuzavrela; sčítavame platby, ktoré už poslala",
+    "upcomingBills": "Nadchádzajúce faktúry",
+    "upcomingBillsEstimate": "odhad zo známych splátok a pohybov",
     "cardNames": "Názvy kariet",
     "noCardsSeen": "Na tomto účte zatiaľ nebola zaznamenaná žiadna karta.",
     "currentTag": "teraz",

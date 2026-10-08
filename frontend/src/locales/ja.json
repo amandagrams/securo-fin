@@ -1222,6 +1222,8 @@
     "billClosedDue": "確定した請求 · 締め日 {{close}} · 支払日 {{due}}",
     "billClosedWasDue": "確定した請求 · 締め日 {{close}} · 支払日は {{due}}",
     "billEstimated": "概算 — 銀行はまだこの請求を確定していません。届いた利用を合計しています",
+    "upcomingBills": "今後の請求",
+    "upcomingBillsEstimate": "判明している分割払いと明細からの見積もり",
     "cardNames": "カード名",
     "noCardsSeen": "この口座ではまだカードが確認されていません。",
     "currentTag": "現在",

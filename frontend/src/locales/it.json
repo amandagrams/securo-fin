@@ -1226,6 +1226,8 @@
     "billClosedDue": "Fattura chiusa · chiusa {{close}} · scade {{due}}",
     "billClosedWasDue": "Fattura chiusa · chiusa {{close}} · scaduta {{due}}",
     "billEstimated": "Stimato — la banca non ha ancora chiuso questa fattura; sommiamo gli addebiti che ha già inviato",
+    "upcomingBills": "Prossime fatture",
+    "upcomingBillsEstimate": "stima da rate e addebiti già noti",
     "cardNames": "Nomi delle carte",
     "noCardsSeen": "Nessuna carta è stata ancora vista su questo conto.",
     "currentTag": "ora",

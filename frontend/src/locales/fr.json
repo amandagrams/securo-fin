@@ -1226,6 +1226,8 @@
     "billClosedDue": "Facture close · clôturée {{close}} · échéance {{due}}",
     "billClosedWasDue": "Facture close · clôturée {{close}} · échue {{due}}",
     "billEstimated": "Estimé — la banque n'a pas encore clos cette facture ; nous additionnons les achats qu'elle a déjà envoyés",
+    "upcomingBills": "Prochaines factures",
+    "upcomingBillsEstimate": "estimation à partir des mensualités et opérations déjà connues",
     "cardNames": "Noms des cartes",
     "noCardsSeen": "Aucune carte n'a encore été vue sur ce compte.",
     "currentTag": "actuel",
