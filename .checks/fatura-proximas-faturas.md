@@ -199,8 +199,15 @@ edição é pontual; locales ~2 KB):
 
 **Um batch só**: S1+S2 não cruzam 150k. Não há fronteira no meio da task.
 
-- **Onde caiu a fronteira**: não houve handoff no meio. S1 e S2 fecham no mesmo branch.
-- **O que o usuário decidiu no meio do build**: a preencher se algo mudar; até aqui, nada — as
-  portas novas (tamanho de `cycles`, soma com sinal, ciclo da linha, null contra zero, seção
-  dona do fetch) estão em `Landing` e não contradizem a porta da task.
-- **O que foi abandonado**: nada tentado e descartado ainda.
+- **Onde caiu a fronteira**: não houve handoff no meio. Checklist em `6100508` e `7056fdf`.
+  S1+S2 no commit `ac850c5`. O commit seguinte alinha as provas: C11/C17 comparam cada
+  `span` com `formatCurrency` (o matcher normaliza o espaço do DOM e o texto do `Intl` não)
+  e o C1 guarda `account.id` antes do `expire_all`, senão o recount perde o greenlet.
+- **O que o usuário decidiu no meio do build**: nada — nenhuma clarificação nem renegociação.
+  As portas novas (tamanho de `cycles`, soma com sinal, ciclo da linha, null contra zero,
+  seção dona do fetch, `amount_primary` gravado) estão em `Landing` e não contradizem a porta
+  da task.
+- **O que foi abandonado**: nada tentado e descartado. Aviso ao próximo agente que o diff não
+  mostra: `uv sync --all-extras` em `backend/` antes do primeiro pytest (o venv não vem com
+  dev extras); `npm ci` em `frontend/` antes do vitest. `ruff format` no arquivo inteiro de
+  `account_service.py` reescreve funções antigas — não rodar format no arquivo todo.

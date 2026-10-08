@@ -153,10 +153,11 @@ async def test_synced_series_projects_next_parcels_at_last_amount(
     test_user: User,
 ):
     account = await _seed_partial_sync(session, test_user)
-    assert await _tx_count(session, account.id) == 5
+    account_id = account.id
+    assert await _tx_count(session, account_id) == 5
 
     resp = await client.get(
-        f"/api/accounts/{account.id}/upcoming-bills",
+        f"/api/accounts/{account_id}/upcoming-bills",
         headers=auth_headers,
         params={"cycles": 3},
     )
@@ -184,7 +185,7 @@ async def test_synced_series_projects_next_parcels_at_last_amount(
         Decimal("99.00"),
     ]
     assert {c["currency"] for c in body["cycles"]} == {"BRL"}
-    assert await _tx_count(session, account.id) == 5
+    assert await _tx_count(session, account_id) == 5
 
 
 async def test_future_committed_total_ignores_cycles_cutoff(

@@ -43,6 +43,10 @@ function payload(overrides: Partial<UpcomingBills> = {}): UpcomingBills {
   }
 }
 
+function lineParts(item: HTMLElement) {
+  return [...item.querySelectorAll('span')].map((span) => span.textContent)
+}
+
 function monthLabel(due: string, language: string) {
   return format(parseISO(`${due}T00:00:00`), 'MMM yyyy', {
     locale: resolveDateFnsLocale(language),
@@ -78,10 +82,14 @@ describe('próximas faturas', () => {
     expect(screen.getByText('estimativa com as parcelas e lançamentos já conhecidos')).toBeTruthy()
     const items = screen.getAllByRole('listitem')
     expect(items).toHaveLength(2)
-    expect(items[0]).toHaveTextContent(monthLabel('2026-11-17', 'pt-BR'))
-    expect(items[0]).toHaveTextContent(formatCurrency(149, 'BRL', 'pt-BR'))
-    expect(items[1]).toHaveTextContent(monthLabel('2026-12-17', 'pt-BR'))
-    expect(items[1]).toHaveTextContent(formatCurrency(99, 'BRL', 'pt-BR'))
+    expect(lineParts(items[0])).toEqual([
+      monthLabel('2026-11-17', 'pt-BR'),
+      formatCurrency(149, 'BRL', 'pt-BR'),
+    ])
+    expect(lineParts(items[1])).toEqual([
+      monthLabel('2026-12-17', 'pt-BR'),
+      formatCurrency(99, 'BRL', 'pt-BR'),
+    ])
   })
 
   it('lists upcoming bills in English', async () => {
@@ -156,8 +164,9 @@ describe('próximas faturas', () => {
       primaryCurrency: 'BRL',
       locale: 'en-US',
     })
-    expect((await screen.findAllByRole('listitem'))[0]).toHaveTextContent(usd)
-    expect(screen.getByRole('listitem')).not.toHaveTextContent(brl)
+    const accountLine = (await screen.findAllByRole('listitem'))[0]
+    expect(lineParts(accountLine)[1]).toBe(usd)
+    expect(lineParts(accountLine)[1]).not.toBe(brl)
     accountCurrency.unmount()
 
     renderSection({
@@ -166,7 +175,8 @@ describe('próximas faturas', () => {
       primaryCurrency: 'BRL',
       locale: 'en-US',
     })
-    expect((await screen.findAllByRole('listitem'))[0]).toHaveTextContent(brl)
-    expect(screen.getByRole('listitem')).not.toHaveTextContent(usd)
+    const primaryLine = (await screen.findAllByRole('listitem'))[0]
+    expect(lineParts(primaryLine)[1]).toBe(brl)
+    expect(lineParts(primaryLine)[1]).not.toBe(usd)
   })
 })
