@@ -86,3 +86,17 @@ async def get_projected_transactions(
     except ValueError as exc:
         from fastapi import HTTPException
         raise HTTPException(status_code=422, detail=str(exc)) from exc
+
+
+from app.schemas.dashboard import CategoryFlows  # noqa: E402
+
+
+@router.get("/category-flows", response_model=CategoryFlows)
+async def get_category_flows(
+    month: Optional[date] = Query(None),
+    ctx: WorkspaceContext = Depends(current_workspace),
+    session: AsyncSession = Depends(get_async_session),
+):
+    return await dashboard_service.get_category_flows(
+        session, ctx.workspace.id, ctx.user_id, month
+    )

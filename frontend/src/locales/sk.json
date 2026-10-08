@@ -1703,7 +1703,18 @@
     "hideWithRulesTitle": "Skryť {{name}}?",
     "hideWithRulesDescription": "Túto kategóriu priraďuje {{count}} aktívnych pravidiel. Skrytie kategórie im už bráni kategorizovať nové transakcie. Ich vypnutie zastaví celé pravidlo vrátane príjemcu alebo poznámok, ktoré tiež nastavuje.",
     "hideKeepRules": "Len skryť",
-    "hideAndTurnOffRules": "Skryť a vypnúť pravidlá"
+    "hideAndTurnOffRules": "Skryť a vypnúť pravidlá",
+    "monthOutflows": "Výdavky podľa kategórie",
+    "monthInflows": "Príjmy podľa kategórie",
+    "uncategorized": "Bez kategórie",
+    "noCategoryFound": "Nenašla sa žiadna kategória",
+    "noOutflows": "Žiadne výdavky v tomto mesiaci",
+    "noInflows": "Žiadne príjmy v tomto mesiaci",
+    "automaticRules": "Automatické pravidlá",
+    "newCategoryAction": "Nová kategória",
+    "flowSearch": "Hľadať kategórie",
+    "previousMonth": "Predchádzajúci mesiac",
+    "nextMonth": "Nasledujúci mesiac"
   },
   "groups": {
     "title": "Skupiny kategórií",

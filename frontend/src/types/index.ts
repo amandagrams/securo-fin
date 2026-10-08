@@ -738,6 +738,20 @@ export interface SpendingByCategory {
   percentage: number
 }
 
+export interface CategoryFlowItem {
+  category_id: string | null
+  category_name: string
+  category_icon: string
+  category_color: string
+  total: number
+  percentage: number
+}
+
+export interface CategoryFlows {
+  outflows: CategoryFlowItem[]
+  inflows: CategoryFlowItem[]
+}
+
 export interface MonthlyTrend {
   month: string
   income: number

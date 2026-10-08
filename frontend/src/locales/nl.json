@@ -1613,7 +1613,18 @@
     "hideKeepRules": "Alleen verbergen",
     "hideWithRulesDescription": "{{count}} actieve regels wijzen deze categorie toe. Verbergen zorgt er al voor dat ze geen nieuwe transacties meer categoriseren. Ze uitschakelen stopt de hele regel, inclusief de begunstigde of notities die de regel ook instelt.",
     "hideWithRulesTitle": "{{name}} verbergen?",
-    "showDefault": "Standaardcategorie tonen"
+    "showDefault": "Standaardcategorie tonen",
+    "monthOutflows": "Uitgaven per categorie",
+    "monthInflows": "Inkomsten per categorie",
+    "uncategorized": "Zonder categorie",
+    "noCategoryFound": "Geen categorie gevonden",
+    "noOutflows": "Geen uitgaven deze maand",
+    "noInflows": "Geen inkomsten deze maand",
+    "automaticRules": "Automatische regels",
+    "newCategoryAction": "Nieuwe categorie",
+    "flowSearch": "Categorieën zoeken",
+    "previousMonth": "Vorige maand",
+    "nextMonth": "Volgende maand"
   },
   "groups": {
     "title": "Categoriegroepen",
