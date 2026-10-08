@@ -2,14 +2,38 @@ import { useState } from 'react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
-import { recurring, transactions } from '@/lib/api'
+import { transactions } from '@/lib/api'
 import { extractApiError } from '@/lib/api-errors'
 import { invalidateFinancialQueries } from '@/lib/invalidate-queries'
-import { useAuth } from '@/contexts/auth-context'
-import type { SaveAction, TransactionSavePayload } from '@/components/transaction-dialog'
-import type { InstallmentSeriesInput, Transaction, TransactionEditPayload } from '@/types'
+import type { RecurringSaveInput, SaveAction, TransactionSavePayload } from '@/components/transaction-dialog'
+import type { InstallmentSeriesInput, Transaction, TransactionApplyScope, TransactionEditPayload } from '@/types'
 
-export type RecurringInput = { frequency: string; end_date?: string }
+export type RecurringInput = RecurringSaveInput
+
+export function recurringPayload(input: RecurringInput): {
+  frequency: string
+  day_of_month?: number
+  end_date?: string
+} {
+  return {
+    frequency: input.frequency,
+    ...(input.day_of_month != null ? { day_of_month: input.day_of_month } : {}),
+    ...(input.end_date ? { end_date: input.end_date } : {}),
+  }
+}
+
+export async function saveEditedTransaction(
+  id: string,
+  data: TransactionEditPayload & {
+    apply_to_transfer_pair?: boolean
+    apply_to?: TransactionApplyScope
+  },
+  recurringData?: RecurringInput,
+): Promise<Transaction> {
+  const updated = await transactions.update(id, data)
+  if (!recurringData) return updated
+  return transactions.makeRecurring(id, recurringPayload(recurringData))
+}
 
 export type CreateTransactionInput = {
   tx: TransactionEditPayload
@@ -31,8 +55,6 @@ export type CreateTransactionInput = {
 export function useCreateTransaction({ onDone }: { onDone: () => void }) {
   const { t } = useTranslation()
   const queryClient = useQueryClient()
-  const { user } = useAuth()
-  const userCurrency = user?.preferences?.currency_display ?? 'USD'
   const [duplicateDraft, setDuplicateDraft] = useState<TransactionEditPayload | null>(null)
   const [formResetKey, setFormResetKey] = useState(0)
 
@@ -54,18 +76,7 @@ export function useCreateTransaction({ onDone }: { onDone: () => void }) {
         created = await transactions.create(payload.tx)
       }
       if (payload.recurringData) {
-        await recurring.create({
-          description: payload.tx.description,
-          amount: payload.tx.amount,
-          currency: payload.tx.currency ?? userCurrency,
-          type: payload.tx.type,
-          frequency: payload.recurringData.frequency,
-          start_date: payload.tx.date,
-          end_date: payload.recurringData.end_date || undefined,
-          category_id: payload.tx.category_id || undefined,
-          account_id: payload.tx.account_id || undefined,
-          skip_first: true,
-        } as Record<string, unknown>)
+        created = await transactions.makeRecurring(created.id, recurringPayload(payload.recurringData))
       }
       if (payload.pendingFiles?.length) {
         await Promise.all(

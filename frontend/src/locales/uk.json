@@ -926,6 +926,14 @@
     "deleted": "Транзакцію видалено",
     "confirmDelete": "Ви впевнені, що хочете видалити цю транзакцію?",
     "makeRecurring": "Зробити регулярною",
+    "makeRecurringOptions": {
+      "monthly": "Щомісяця",
+      "quarterly": "Щоквартально",
+      "semiannual": "Кожні 6 місяців",
+      "weekly": "Щотижня",
+      "biweekly": "Кожні 2 тижні",
+      "yearly": "Щороку"
+    },
     "makeInstallment": "Повторити платежами",
     "installmentCount": "Кількість платежів",
     "installmentFrequency": "Періодичність",
