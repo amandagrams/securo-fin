@@ -13,6 +13,7 @@ const api = vi.hoisted(() => ({
     spendingByCategory: vi.fn(),
     balanceHistory: vi.fn(),
     projectedTransactions: vi.fn(),
+    creditCardBills: vi.fn(),
   },
   transactions: { list: vi.fn(), calendar: vi.fn() },
   budgets: { comparison: vi.fn() },
@@ -110,6 +111,12 @@ beforeEach(() => {
   api.dashboard.spendingByCategory.mockResolvedValue([])
   api.dashboard.balanceHistory.mockResolvedValue({ current: [], previous: [] })
   api.dashboard.projectedTransactions.mockResolvedValue([])
+  api.dashboard.creditCardBills.mockResolvedValue({
+    items: [],
+    total_primary: 0,
+    accounts_count: 0,
+    earliest_due_date: null,
+  })
   api.transactions.list.mockResolvedValue({ items: [], total: 0 })
   api.budgets.comparison.mockResolvedValue([])
   api.categories.list.mockResolvedValue([])
