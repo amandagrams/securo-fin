@@ -106,38 +106,46 @@ Proof: `uv run pytest tests/test_upcoming_bills_api.py::test_cycles_out_of_range
 `future_committed_total` continua `644.00`
 Proof: `uv run pytest tests/test_upcoming_bills_api.py::test_cycles_bounds_keep_future_total`
 
+**C10** (porta da soma primária) - Conta `USD`, primária `BRL`. Série de 2 sem
+`installment_series_id`: a parcela 1 está no ciclo em curso com `amount=10.00` e
+`amount_primary=55.00`; a 2 não existe e é projetada no primeiro ciclo futuro. Débito manual
+nesse ciclo: `amount=4.00`, `amount_primary=22.00`. `GET ?cycles=1` → `currency=USD`,
+`committed_total=14.00`, `committed_total_primary=77.00`, e os dois totais futuros iguais a
+esses (a projeção copia o `amount_primary` da âncora, não o `amount`)
+Proof: `uv run pytest tests/test_upcoming_bills_api.py::test_primary_totals_use_stored_amount_primary`
+
 ### S2 - Seção na página · 6 files · ~30 KB · ~8k
 
 O componente recebe o que a página passa: id, type, moeda da conta, `showPrimary` e a moeda
 primária. O mês assertado é `format(due_date, 'MMM yyyy')` com o locale date-fns da régua; o
 valor assertado é `formatCurrency` na moeda e no locale de exibição.
 
-**C10** (8) - Em pt-BR, a seção mostra `Próximas faturas`, a nota `estimativa com as parcelas e
+**C11** (8) - Em pt-BR, a seção mostra `Próximas faturas`, a nota `estimativa com as parcelas e
 lançamentos já conhecidos`, e cada ciclo com o mês `MMM yyyy` do `due_date` e o
 `committed_total` formatado
 Proof: `npx vitest run src/components/upcoming-bills-section.test.tsx -t "lists each upcoming cycle with the bill month and the estimate note in pt-BR"`
 
-**C11** (8) - Em en, o título é `Upcoming bills` e a nota é `estimate from known installments and
+**C12** (8) - Em en, o título é `Upcoming bills` e a nota é `estimate from known installments and
 charges`
 Proof: `npx vitest run src/components/upcoming-bills-section.test.tsx -t "lists upcoming bills in English"`
 
-**C12** (9) - Todo `committed_total` `0` e `future_committed_total` `0`, e o mesmo com
+**C13** (9) - Todo `committed_total` `0` e `future_committed_total` `0`, e o mesmo com
 `future_committed_total` `null`: a seção não aparece
 Proof: `npx vitest run src/components/upcoming-bills-section.test.tsx -t "hides the section when every committed total is zero and the future total is zero or null"`
 
-**C13** (9) - Ciclos devolvidos todos a `0` mas `future_committed_total` diferente de `0`: a
+**C14** (9) - Ciclos devolvidos todos a `0` mas `future_committed_total` diferente de `0`: a
 seção aparece (o corte de `cycles` não esconde compromisso que ficou de fora da lista)
 Proof: `npx vitest run src/components/upcoming-bills-section.test.tsx -t "shows the section when future commitments sit past the returned cycles"`
 
-**C14** (10) - Enquanto o fetch não resolve: a seção não aparece e não há skeleton
+**C15** (10) - Enquanto o fetch não resolve: a seção não aparece e não há skeleton
 (`animate-pulse`) novo
 Proof: `npx vitest run src/components/upcoming-bills-section.test.tsx -t "renders nothing and no skeleton while upcoming bills load"`
 
-**C15** (11) - `type` diferente de `credit_card`: a seção não aparece e
+**C16** (11) - `type` diferente de `credit_card`: a seção não aparece e
 `accounts.upcomingBills` não é chamado
 Proof: `npx vitest run src/components/upcoming-bills-section.test.tsx -t "does not render or fetch upcoming bills for a non credit card"`
 
-**C16** (12) - Conta `USD`, primária `BRL`. Com o seletor na moeda da conta, o valor exibido é
+**C17** (12) - Conta `USD`, primária `BRL`. Com o seletor na moeda da conta, o valor exibido é
 `committed_total` em USD; com o seletor na primária, é `committed_total_primary` em BRL. O
 número da outra moeda não aparece
 Proof: `npx vitest run src/components/upcoming-bills-section.test.tsx -t "shows account currency totals or primary totals with the currency selector"`
@@ -165,12 +173,13 @@ Herdado da task, mapeado para checks:
 | linhas do ciclo de C3 (8) | débito simples C3 · débito `treat_as_transfer` C3 · crédito simples C3 · `is_ignored` C3 · `transfer_pair_id` C3 · crédito `treat_as_transfer` C3 · settlement C3 · categoria `is_ignored` C3 | - |
 | formas da conta (5) | cartão com os dois dias C1 · sem close C5 · sem due C5 · `checking` C5 · outro workspace C6 | - |
 | `cycles` (6) | default 6 C7 · `3` C1 · `1` C9 · `24` C9 · `0` C8 · `25` C8 | - |
-| visibilidade da seção (4) | há totais C10 · tudo zero C12 · futuro null C12 · futuro fora da janela C13 | - |
-| idiomas com copy nos critérios (2) | pt-BR C10 · en C11 | - |
-| moedas do seletor (2) | USD `committed_total` C16 · BRL `committed_total_primary` C16 | - |
+| visibilidade da seção (4) | há totais C11 · tudo zero C13 · futuro null C13 · futuro fora da janela C14 | - |
+| idiomas com copy nos critérios (2) | pt-BR C11 · en C12 | - |
+| moedas do seletor (2) | USD `committed_total` C17 · BRL `committed_total_primary` C17 | - |
+| moedas do total primário (2) | `committed_total` em USD C10 · `committed_total_primary` em BRL C10 | - |
 
-- Claims que nomeiam status code, rota ou shape de resposta: C1, C2, C5, C6, C7, C8, C9 — todos
-  provados via cliente HTTP (httpx ASGI), cruzando a fronteira
+- Claims que nomeiam status code, rota ou shape de resposta: C1, C2, C5, C6, C7, C8, C9, C10 —
+  todos provados via cliente HTTP (httpx ASGI), cruzando a fronteira
 - Nenhum outro check afirma mais do que o caso que seu proof exercita
 - Chave nova em `en.json` (`accounts.upcomingBills`, `accounts.upcomingBillsEstimate`) entra no
   teste de paridade já existente (`src/locales/i18n.test.ts`, `it(locale)` por locale)
