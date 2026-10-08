@@ -134,3 +134,9 @@ class AccountSummary(BaseModel):
     monthly_expenses_primary: Optional[float] = None
     projected_income_primary: Optional[float] = None
     projected_expenses_primary: Optional[float] = None
+    # Credit-card bill composition. Null on every other account type.
+    # Purchases minus refunds is projected_expenses: same scope, split by side.
+    bill_purchases: Optional[float] = None
+    bill_refunds: Optional[float] = None
+    bill_purchases_primary: Optional[float] = None
+    bill_refunds_primary: Optional[float] = None
