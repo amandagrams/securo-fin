@@ -1204,6 +1204,8 @@
     "minimumPayment": "Mínimo",
     "noChargesYet": "Nenhuma compra ainda neste ciclo",
     "noCard": "Sem cartão",
+    "upcomingBills": "Próximas faturas",
+    "upcomingBillsEstimate": "estimativa com as parcelas e lançamentos já conhecidos",
     "cardNames": "Nomes dos cartões",
     "noCardsSeen": "Nenhum cartão foi visto ainda nesta conta.",
     "currentTag": "agora",

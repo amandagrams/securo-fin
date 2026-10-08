@@ -1200,6 +1200,8 @@
     "minimumPayment": "Minimum",
     "noChargesYet": "No charges yet this cycle",
     "noCard": "No card",
+    "upcomingBills": "Upcoming bills",
+    "upcomingBillsEstimate": "estimate from known installments and charges",
     "cardNames": "Card names",
     "noCardsSeen": "No card has been seen on this account yet.",
     "currentTag": "now",

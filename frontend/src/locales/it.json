@@ -1204,6 +1204,8 @@
     "minimumPayment": "Minimo",
     "noChargesYet": "Ancora nessun addebito in questo ciclo",
     "noCard": "Senza carta",
+    "upcomingBills": "Prossime fatture",
+    "upcomingBillsEstimate": "stima da rate e addebiti già noti",
     "cardNames": "Nomi delle carte",
     "noCardsSeen": "Nessuna carta è stata ancora vista su questo conto.",
     "currentTag": "ora",

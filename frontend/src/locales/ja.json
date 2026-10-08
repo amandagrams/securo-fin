@@ -1200,6 +1200,8 @@
     "minimumPayment": "最低支払額",
     "noChargesYet": "今サイクルの請求はまだありません",
     "noCard": "カードなし",
+    "upcomingBills": "今後の請求",
+    "upcomingBillsEstimate": "判明している分割払いと明細からの見積もり",
     "cardNames": "カード名",
     "noCardsSeen": "この口座ではまだカードが確認されていません。",
     "currentTag": "現在",
