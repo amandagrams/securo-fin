@@ -162,8 +162,9 @@ describe('category month flows', () => {
     renderPage()
 
     const outflows = await screen.findByRole('region', { name: 'Saídas por categoria' })
+    expect(await within(outflows).findByText(/R\$\s*140,00/)).toBeInTheDocument()
     const inflows = screen.getByRole('region', { name: 'Entradas por categoria' })
-    const catalog = screen.getByText('Essenciais')
+    const catalog = await screen.findByText('Essenciais')
 
     const outflowText = outflows.textContent ?? ''
     expect(outflowText.indexOf('Alimentação')).toBeGreaterThanOrEqual(0)
@@ -245,7 +246,7 @@ describe('category month flows', () => {
 
     expect(await screen.findByRole('region', { name: 'Saídas por categoria' })).toBeInTheDocument()
     expect(screen.getByRole('region', { name: 'Entradas por categoria' })).toBeInTheDocument()
-    expect(screen.getByText('Nenhuma saída neste mês')).toBeInTheDocument()
+    expect(await screen.findByText('Nenhuma saída neste mês')).toBeInTheDocument()
     expect(screen.getByText('Nenhuma entrada neste mês')).toBeInTheDocument()
 
     await i18n.changeLanguage('en')

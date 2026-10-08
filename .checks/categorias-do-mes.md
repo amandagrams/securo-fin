@@ -161,4 +161,13 @@ Herdado da task, mapeado para checks:
 
 ## Handoff
 
-Checklist escrito antes do código. O handoff de build entra depois dos proofs.
+Checklist no commit `0541afd`, antes do código. Implementação no commit `bf1893c`. O teste de tela esperava o catálogo e o mês vazio no primeiro paint, quando a seção já existe e a query ainda não resolveu; a espera passou a ser pelo conteúdo. Esse ajuste está no commit desta revisão.
+
+Proofs, todos com exit code 0:
+
+- `cd backend && uv run pytest` — 4286 passed, 8 skipped
+- `cd backend && uv run ruff check` nos arquivos tocados — limpo
+- `npx vitest run src/pages/categories-month-flows.test.tsx -t` para cada um dos 8 testes de S2 — exit 0
+- `npx vitest run src/pages/categories-delete.test.tsx src/locales/i18n.test.ts` — exit 0
+
+Nada foi abandonado. O motor de regras e `spending-by-category` não foram reescritos. `uv sync --all-extras` em `backend/` foi necessário antes do primeiro pytest.
