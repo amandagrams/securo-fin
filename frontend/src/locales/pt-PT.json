@@ -880,7 +880,10 @@
     "fxRateUsed": "Taxa de câmbio: {{rate}}",
     "refreshRates": "Atualizar taxas de câmbio",
     "ratesRefreshed": "Taxas de câmbio atualizadas",
-    "ratesError": "Erro ao atualizar taxas de câmbio"
+    "ratesError": "Erro ao atualizar taxas de câmbio",
+    "openBills": "Faturas em aberto",
+    "openBillsSubtitle": "{{count}} cartões · vence {{date}}",
+    "openBillsDue": "vence {{date}}"
   },
   "transactions": {
     "title": "Transações",

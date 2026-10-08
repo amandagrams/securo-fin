@@ -892,7 +892,10 @@
     "fxRateUsed": "Kurs FX: {{rate}}",
     "refreshRates": "Odśwież kursy FX",
     "ratesRefreshed": "Zaktualizowano kursy FX",
-    "ratesError": "Nie udało się zaktualizować kursów FX"
+    "ratesError": "Nie udało się zaktualizować kursów FX",
+    "openBills": "Otwarte rachunki",
+    "openBillsSubtitle": "{{count}} kart · termin {{date}}",
+    "openBillsDue": "termin {{date}}"
   },
   "transactions": {
     "title": "Transakcje",

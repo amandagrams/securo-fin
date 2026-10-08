@@ -730,6 +730,26 @@ export interface DashboardSummary {
   pending_shares_net: number
 }
 
+export interface OpenCreditCardBill {
+  account_id: string
+  account_name: string
+  masked_number: string | null
+  institution_logo_url: string | null
+  due_date: string
+  close_date: string
+  status: 'open' | 'closed'
+  amount: number
+  amount_primary: number
+  currency: string
+}
+
+export interface OpenCreditCardBills {
+  items: OpenCreditCardBill[]
+  total_primary: number
+  accounts_count: number
+  earliest_due_date: string | null
+}
+
 export interface SpendingByCategory {
   category_id: string | null
   category_name: string
