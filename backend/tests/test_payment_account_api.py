@@ -231,12 +231,12 @@ async def test_patch_payment_account_on_existing_and_synced_card(
     ])
     provider.get_transactions = AsyncMock(return_value=[])
     provider.get_bills = AsyncMock(return_value=[])
-    silence = (
+    with (
+        patch("app.services.connection_service.get_provider", return_value=provider),
         patch("app.services.connection_service.detect_transfer_pairs", new_callable=AsyncMock),
         patch("app.services.connection_service.stamp_primary_amount", new_callable=AsyncMock),
         patch("app.services.connection_service.apply_rules_to_transaction", new_callable=AsyncMock),
-    )
-    with patch("app.services.connection_service.get_provider", return_value=provider), *silence:
+    ):
         await sync_connection(session, conn.id, test_workspace.id, test_user.id)
 
     synced = (await session.execute(
@@ -252,11 +252,20 @@ async def test_patch_payment_account_on_existing_and_synced_card(
     assert patched.status_code == 200, patched.text
     assert patched.json()["payment_account_id"] == conta_id
 
+    connection_id = conn.id
+    synced_id = synced.id
+    workspace_id = test_workspace.id
+    user_id = test_user.id
     session.expire_all()
-    with patch("app.services.connection_service.get_provider", return_value=provider), *silence:
-        await sync_connection(session, conn.id, test_workspace.id, test_user.id)
+    with (
+        patch("app.services.connection_service.get_provider", return_value=provider),
+        patch("app.services.connection_service.detect_transfer_pairs", new_callable=AsyncMock),
+        patch("app.services.connection_service.stamp_primary_amount", new_callable=AsyncMock),
+        patch("app.services.connection_service.apply_rules_to_transaction", new_callable=AsyncMock),
+    ):
+        await sync_connection(session, connection_id, workspace_id, user_id)
 
-    refetched = await client.get(f"/api/accounts/{synced.id}", headers=auth_headers)
+    refetched = await client.get(f"/api/accounts/{synced_id}", headers=auth_headers)
     assert refetched.status_code == 200
     assert refetched.json()["payment_account_id"] == conta_id
 

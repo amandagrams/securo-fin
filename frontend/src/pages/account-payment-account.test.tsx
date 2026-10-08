@@ -197,8 +197,7 @@ describe('conta que paga a fatura', () => {
       route: '/accounts/card-1',
       path: '/accounts/:id',
     })
-    await waitFor(() => expect(api.transactions.list).toHaveBeenCalled())
-
+    await screen.findByTitle(i18n.t('common.edit'))
     await user.click(screen.getByTitle(i18n.t('common.edit')))
     const payer = paymentSelect()
     expect(optionLabels(payer)).toEqual(expect.arrayContaining(['Conta', 'Outra']))
@@ -213,8 +212,8 @@ describe('conta que paga a fatura', () => {
     ))
 
     await user.click(screen.getByTitle(i18n.t('common.edit')))
+    await waitFor(() => expect(paymentSelect().value).toBe(conta.id))
     const again = paymentSelect()
-    expect(again.value).toBe(conta.id)
     await user.selectOptions(again, '')
     await user.click(screen.getByRole('button', { name: i18n.t('common.save') }))
     await waitFor(() => expect(api.accounts.update).toHaveBeenLastCalledWith(

@@ -197,14 +197,11 @@ Herdado da task, mapeado para checks:
 
 ## Handoff
 
-Aritmética (wc -c ÷ 4; locales contados como inserção pontual, não o arquivo inteiro):
+As três fatias fecharam neste batch. Não houve fronteira de fatia: S1, S2 e S3 estão no
+mesmo commit, com proofs verdes. O usuário não decidiu nada além da tarefa. Nada foi
+abandonado.
 
-- S1 ≈ 30k (modelo, schema, service, rota, sync, migração)
-- S2 ≈ 22k (calendário + schema da resposta) — acumulado ≈ 52k
-- S3 ≈ 20k (diálogo de criar, seletor no diálogo de configurações, vista do calendário) —
-  acumulado ≈ 72k, abaixo de 150k, e a superfície de UI cabe junto porque o diálogo de
-  configurações já está lido
-
-Fronteira de fatia não foi necessária: as três fecham neste batch se os proofs ficarem verdes.
-Se um proof de S3 falhar sem conserto no mesmo corte, o handoff volta para cá com o que o
-usuário decidiu (nada) e o que foi abandonado.
+O calendário sem filtro passou a somar só checking aberta. O teste que provava que as
+duas pernas de uma transferência ficam fora de receita/despesa usava uma perna em
+savings; essa perna agora é checking, para as duas continuarem no escopo e o líquido
+seguir zerado. A asserção não foi afrouxada.
