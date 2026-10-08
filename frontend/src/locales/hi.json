@@ -918,6 +918,14 @@
     "deleted": "लेन-देन हटाया गया",
     "confirmDelete": "क्या आप वाकई इस लेन-देन को हटाना चाहते हैं?",
     "makeRecurring": "आवर्ती बनाएँ",
+    "makeRecurringOptions": {
+      "monthly": "मासिक",
+      "quarterly": "त्रैमासिक",
+      "semiannual": "हर 6 महीने",
+      "weekly": "साप्ताहिक",
+      "biweekly": "हर 2 सप्ताह",
+      "yearly": "वार्षिक"
+    },
     "makeInstallment": "किश्तों के रूप में दोहराएँ",
     "installmentCount": "किश्तों की संख्या",
     "installmentFrequency": "आवृत्ति",

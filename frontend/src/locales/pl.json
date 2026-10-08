@@ -932,6 +932,14 @@
     "deleted": "Usunięto transakcję",
     "confirmDelete": "Czy na pewno usunąć tę transakcję?",
     "makeRecurring": "Ustaw jako cykliczną",
+    "makeRecurringOptions": {
+      "monthly": "Miesięcznie",
+      "quarterly": "Kwartalnie",
+      "semiannual": "Co 6 miesięcy",
+      "weekly": "Tygodniowo",
+      "biweekly": "Co 2 tygodnie",
+      "yearly": "Rocznie"
+    },
     "makeInstallment": "Powtórz jako raty",
     "installmentCount": "Liczba rat",
     "installmentFrequency": "Częstotliwość",

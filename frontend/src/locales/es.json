@@ -920,6 +920,14 @@
     "deleted": "Transacción eliminada",
     "confirmDelete": "¿Estás seguro de que quieres eliminar esta transacción?",
     "makeRecurring": "Hacer recurrente",
+    "makeRecurringOptions": {
+      "monthly": "Mensual",
+      "quarterly": "Trimestral",
+      "semiannual": "Cada 6 meses",
+      "weekly": "Semanal",
+      "biweekly": "Cada 2 semanas",
+      "yearly": "Anual"
+    },
     "makeInstallment": "Repetir en cuotas",
     "installmentCount": "Número de cuotas",
     "installmentFrequency": "Frecuencia",

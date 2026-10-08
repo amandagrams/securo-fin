@@ -918,6 +918,14 @@
     "deleted": "Transaktion gelöscht",
     "confirmDelete": "Möchtest du diese Transaktion wirklich löschen?",
     "makeRecurring": "Als wiederkehrend einrichten",
+    "makeRecurringOptions": {
+      "monthly": "Monatlich",
+      "quarterly": "Vierteljährlich",
+      "semiannual": "Alle 6 Monate",
+      "weekly": "Wöchentlich",
+      "biweekly": "Alle 2 Wochen",
+      "yearly": "Jährlich"
+    },
     "makeInstallment": "Als Raten wiederholen",
     "installmentCount": "Anzahl der Raten",
     "installmentFrequency": "Häufigkeit",

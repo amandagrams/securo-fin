@@ -934,6 +934,14 @@
     "deleted": "Transakcia vymazaná",
     "confirmDelete": "Naozaj chceš vymazať túto transakciu?",
     "makeRecurring": "Nastaviť ako opakovanú",
+    "makeRecurringOptions": {
+      "monthly": "Mesačne",
+      "quarterly": "Štvrťročne",
+      "semiannual": "Každých 6 mesiacov",
+      "weekly": "Týždenne",
+      "biweekly": "Každé 2 týždne",
+      "yearly": "Ročne"
+    },
     "makeInstallment": "Rozložiť na splátky",
     "installmentCount": "Počet splátok",
     "installmentFrequency": "Frekvencia",

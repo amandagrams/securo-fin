@@ -593,6 +593,13 @@ export const transactions = {
     const { data } = await api.patch(`/transactions/${id}/unlink-recurring`)
     return data
   },
+  makeRecurring: async (
+    id: string,
+    payload: { frequency: string; day_of_month?: number; end_date?: string },
+  ): Promise<Transaction> => {
+    const { data } = await api.post(`/transactions/${id}/make-recurring`, payload)
+    return data
+  },
   createTransfer: async (transfer: {
     from_account_id: string
     to_account_id: string
