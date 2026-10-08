@@ -179,6 +179,7 @@ export interface Account {
   available_credit: number | null
   statement_close_day: number | null
   payment_due_day: number | null
+  payment_account_id: string | null
   next_close_date: string | null
   next_due_date: string | null
   minimum_payment: number | null
@@ -699,6 +700,7 @@ export interface TransactionCalendarResponse {
   month: string
   currency: string
   account_ids: string[] | null
+  actual_balance: number
   days: TransactionCalendarDay[]
 }
 

@@ -72,12 +72,18 @@ async def test_get_account_found(client: AsyncClient, auth_headers, test_account
 
 @pytest.mark.asyncio
 async def test_create_credit_card_account(client: AsyncClient, auth_headers):
+    checking = await client.post(
+        "/api/accounts", headers=auth_headers,
+        json={"name": "Conta", "type": "checking", "balance": "0.00"},
+    )
+    assert checking.status_code == 201, checking.text
     resp = await client.post(
         "/api/accounts", headers=auth_headers,
         json={
             "name": "Visa", "type": "credit_card", "balance": "0.00",
             "credit_limit": "5000.00", "statement_close_day": 10,
             "payment_due_day": 18, "card_brand": "visa",
+            "payment_account_id": checking.json()["id"],
         },
     )
     assert resp.status_code == 201, resp.text
