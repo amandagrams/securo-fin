@@ -144,7 +144,7 @@ describe('Dashboard open bills', () => {
     const earliest = dueLabel('2026-10-15', 'en')
     const later = dueLabel('2026-11-20', 'en')
 
-    expect(within(region).getByText(formatCurrency(140, 'USD', 'en-US'))).toBeInTheDocument()
+    expect(await within(region).findByText(formatCurrency(140, 'USD', 'en-US'))).toBeInTheDocument()
     expect(within(region).getByText(t('dashboard.openBillsSubtitle', { count: 2, date: earliest }))).toBeInTheDocument()
 
     const alpha = within(region).getByRole('link', { name: /Alpha/ })
@@ -169,7 +169,7 @@ describe('Dashboard open bills', () => {
     const region = await screen.findByRole('region', { name: 'Faturas em aberto' })
     const earliest = dueLabel('2026-10-15', 'pt-BR')
 
-    expect(within(region).getByText(t('dashboard.openBillsSubtitle', { count: 2, date: earliest }))).toBeInTheDocument()
+    expect(await within(region).findByText(t('dashboard.openBillsSubtitle', { count: 2, date: earliest }))).toBeInTheDocument()
     expect(within(region).getByRole('link', { name: /Alpha/ })).toHaveTextContent(
       t('dashboard.openBillsDue', { date: earliest }),
     )
@@ -219,7 +219,7 @@ describe('Dashboard open bills', () => {
   it('recalculates open bill aggregates from the visible accounts', async () => {
     const { rerender } = renderWithProviders(<DashboardHarness />)
     const region = await screen.findByRole('region', { name: 'Open bills' })
-    expect(within(region).getByText(formatCurrency(140, 'USD', 'en-US'))).toBeInTheDocument()
+    expect(await within(region).findByText(formatCurrency(140, 'USD', 'en-US'))).toBeInTheDocument()
 
     filter.activeAccountIds = ['card-b']
     rerender(<DashboardHarness />)
