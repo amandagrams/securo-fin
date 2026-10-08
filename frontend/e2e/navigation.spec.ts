@@ -1,4 +1,8 @@
+import { writeFileSync } from 'node:fs'
+
 import { expect, test, type Page } from '@playwright/test'
+
+const E2E_USER_FILE = '/tmp/securo-e2e-user.json'
 
 /**
  * Navigation of the screens that already exist on main, for a signed-in
@@ -124,10 +128,12 @@ async function registerAccount(page: Page) {
   }
 
   await expect(page.getByRole('heading', { name: 'Create account' })).toBeVisible()
-  await page.locator('#email').fill(`e2e-user-${stamp}@example.com`)
+  const email = `e2e-user-${stamp}@example.com`
+  await page.locator('#email').fill(email)
   await fillPasswordPair(page, password)
   await page.getByRole('button', { name: 'Create account' }).click()
   await expectPath(page, '/')
+  writeFileSync(E2E_USER_FILE, JSON.stringify({ email, password }))
   await dismissTour(page)
   await expect(page.locator('aside nav').getByRole('link', { name: 'Accounts', exact: true })).toBeVisible()
 }
