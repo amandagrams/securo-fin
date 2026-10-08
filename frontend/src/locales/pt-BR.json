@@ -1615,7 +1615,18 @@
     "hideWithRulesTitle": "Ocultar {{name}}?",
     "hideWithRulesDescription": "{{count}} regras ativas atribuem esta categoria. Ocultá-la já impede que elas categorizem novas transações. Desligá-las para a regra inteira, incluindo a pessoa ou as notas que ela também define.",
     "hideKeepRules": "Apenas ocultar",
-    "hideAndTurnOffRules": "Ocultar e desligar as regras"
+    "hideAndTurnOffRules": "Ocultar e desligar as regras",
+    "monthOutflows": "Saídas por categoria",
+    "monthInflows": "Entradas por categoria",
+    "uncategorized": "Sem categoria",
+    "noCategoryFound": "Nenhuma categoria encontrada",
+    "noOutflows": "Nenhuma saída neste mês",
+    "noInflows": "Nenhuma entrada neste mês",
+    "automaticRules": "Regras automáticas",
+    "newCategoryAction": "Nova categoria",
+    "flowSearch": "Buscar categorias",
+    "previousMonth": "Mês anterior",
+    "nextMonth": "Próximo mês"
   },
   "groups": {
     "title": "Grupos de Categorias",

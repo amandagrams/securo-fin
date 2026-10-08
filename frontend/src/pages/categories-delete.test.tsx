@@ -26,16 +26,29 @@ const api = vi.hoisted(() => ({
     update: vi.fn(),
     delete: vi.fn(),
   },
+  dashboard: {
+    categoryFlows: vi.fn(),
+  },
 }))
 
 vi.mock('@/lib/api', () => ({
   categories: api.categories,
   categoryGroups: api.categoryGroups,
+  dashboard: api.dashboard,
 }))
 
 vi.mock('@/contexts/workspace-context', () => ({
   useWorkspace: () => ({ canWrite: true }),
   WorkspaceContext: createContext<{ canWrite: boolean } | undefined>({ canWrite: true }),
+}))
+
+vi.mock('@/contexts/auth-context', () => ({
+  useAuth: () => ({ user: { preferences: { currency_display: 'BRL' } } }),
+}))
+
+vi.mock('@/hooks/use-display-locale', () => ({
+  useDisplayLocale: () => 'pt-BR',
+  useDateLocale: () => 'pt-BR',
 }))
 
 function category(id: string, name: string, overrides = {}) {
@@ -64,6 +77,7 @@ beforeEach(() => {
   api.categories.listIncludingHidden.mockResolvedValue([FOOD, TRANSPORT])
   api.categoryGroups.listIncludingHidden.mockResolvedValue([])
   api.categories.delete.mockResolvedValue(undefined)
+  api.dashboard.categoryFlows.mockResolvedValue({ outflows: [], inflows: [] })
 })
 
 async function clickDelete(user: ReturnType<typeof renderWithProviders>['user'], name: string) {
