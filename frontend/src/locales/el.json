@@ -878,7 +878,10 @@
     "fxRateUsed": "Συναλλαγματική ισοτιμία: {{rate}}",
     "refreshRates": "Ανανέωση ισοτιμιών FX",
     "ratesRefreshed": "Οι ισοτιμίες FX ενημερώθηκαν",
-    "ratesError": "Αποτυχία ενημέρωσης ισοτιμιών FX"
+    "ratesError": "Αποτυχία ενημέρωσης ισοτιμιών FX",
+    "openBills": "Ανοιχτοί λογαριασμοί",
+    "openBillsSubtitle": "{{count}} κάρτες · λήξη {{date}}",
+    "openBillsDue": "λήξη {{date}}"
   },
   "accounts": {
     "title": "Λογαριασμοί",

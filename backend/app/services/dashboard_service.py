@@ -1679,3 +1679,306 @@ async def get_balance_history(
         prev_daily.append(DailyBalance(day=day, balance=round(balance, 2)))
 
     return BalanceHistory(current=current_daily, previous=prev_daily)
+
+
+def _clamp_cycle_day(year: int, month: int, day: int) -> date:
+    import calendar
+    last = calendar.monthrange(year, month)[1]
+    return date(year, month, min(day, last))
+
+
+def _shift_month(year: int, month: int, delta: int) -> tuple[int, int]:
+    index = year * 12 + (month - 1) + delta
+    return index // 12, index % 12 + 1
+
+
+def _close_date_for_due(due: date, close_day: Optional[int]) -> date:
+    """Most recent statement_close_day on or before `due`.
+
+    Same derivation as the account page's `closeDateForBill`. Without a close
+    day the bill's due date stands in for the close.
+    """
+    if not close_day:
+        return due
+    same = _clamp_cycle_day(due.year, due.month, close_day)
+    if same <= due:
+        return same
+    year, month = _shift_month(due.year, due.month, -1)
+    return _clamp_cycle_day(year, month, close_day)
+
+
+def _cycle_containing(close_day: int, reference: date) -> tuple[date, date, date]:
+    """Return (start, end, close_date) of the cycle that contains `reference`.
+
+    Mirrors the account page's `creditCardCycleBoundaries`: a purchase on the
+    close day belongs to the next cycle, so this cycle ends the day before the
+    next close strictly after `reference` and starts on the previous close day.
+    """
+    this_close = _clamp_cycle_day(reference.year, reference.month, close_day)
+    if this_close > reference:
+        next_close = this_close
+    else:
+        year, month = _shift_month(reference.year, reference.month, 1)
+        next_close = _clamp_cycle_day(year, month, close_day)
+    end = next_close - timedelta(days=1)
+    prev_year, prev_month = _shift_month(next_close.year, next_close.month, -1)
+    start = _clamp_cycle_day(prev_year, prev_month, close_day)
+    return start, end, next_close
+
+
+def _due_strictly_after(cycle_end: date, due_day: int) -> date:
+    """Bill due date for a cycle that ends on `cycle_end` (the day before close)."""
+    same = _clamp_cycle_day(cycle_end.year, cycle_end.month, due_day)
+    if same > cycle_end:
+        return same
+    year, month = _shift_month(cycle_end.year, cycle_end.month, 1)
+    return _clamp_cycle_day(year, month, due_day)
+
+
+def _range_for_bill(due: date, previous_due: Optional[date]) -> tuple[date, date]:
+    """Window the account page sends for a real bill (`rangeForBill`)."""
+    if previous_due is not None:
+        start = previous_due + timedelta(days=1)
+    else:
+        start = due - timedelta(days=45)
+    return start, due
+
+
+def _bill_status(close: date, today: date) -> str:
+    return "open" if close >= today else "closed"
+
+
+async def _projected_bill_amounts(
+    session: AsyncSession,
+    account: Account,
+    workspace_id: uuid.UUID,
+    primary_currency: str,
+    start: date,
+    end: date,
+    *,
+    bill_id: Optional[uuid.UUID],
+    unbilled_only: bool,
+) -> Optional[tuple[float, float]]:
+    """Account-currency total and its primary-currency twin.
+
+    The total is `get_account_summary`'s `projected_expenses` for this bill's
+    window — the same number the account page labels as the bill total.
+    """
+    from app.services.account_service import get_account_summary
+
+    summary = await get_account_summary(
+        session,
+        account.id,
+        workspace_id,
+        date_from=start,
+        date_to=end,
+        bill_id=bill_id,
+        unbilled_only=unbilled_only,
+    )
+    if summary is None:
+        return None
+    amount = float(summary["projected_expenses"])
+    if account.currency != primary_currency:
+        converted, _ = await convert(
+            session, Decimal(str(amount)), account.currency, primary_currency,
+        )
+        amount_primary = float(converted)
+    else:
+        amount_primary = amount
+    return amount, amount_primary
+
+
+def _open_bill_row(
+    account: Account,
+    *,
+    due: date,
+    close: date,
+    today: date,
+    amount: float,
+    amount_primary: float,
+) -> dict:
+    from app.services.account_service import _institution, get_account_name
+
+    _name, logo = _institution(account, account.connection)
+    return {
+        "account_id": account.id,
+        "account_name": get_account_name(account),
+        "masked_number": account.masked_number,
+        "institution_logo_url": logo,
+        "due_date": due,
+        "close_date": close,
+        "status": _bill_status(close, today),
+        "amount": amount,
+        "amount_primary": amount_primary,
+        "currency": account.currency,
+    }
+
+
+async def _resolve_open_bill(
+    session: AsyncSession,
+    account: Account,
+    bills: list,
+    workspace_id: uuid.UUID,
+    today: date,
+    primary_currency: str,
+) -> Optional[dict]:
+    """The bill the account page opens on, or None when the card is not eligible.
+
+    Upcoming bill (smallest due_date >= today) wins. When every synced bill is
+    already past due, the cycle that contains today is the current one — not
+    that overdue bill. A card with no bills uses `get_cycle_dates` when both
+    cycle days are set.
+    """
+    from app.services.credit_card_service import get_cycle_dates
+
+    upcoming_index = next(
+        (index for index, bill in enumerate(bills) if bill.due_date >= today),
+        None,
+    )
+    if upcoming_index is not None:
+        bill = bills[upcoming_index]
+        previous = bills[upcoming_index - 1] if upcoming_index > 0 else None
+        start, end = _range_for_bill(bill.due_date, previous.due_date if previous else None)
+        amounts = await _projected_bill_amounts(
+            session, account, workspace_id, primary_currency, start, end,
+            bill_id=bill.id, unbilled_only=False,
+        )
+        if amounts is None:
+            return None
+        amount, amount_primary = amounts
+        return _open_bill_row(
+            account,
+            due=bill.due_date,
+            close=_close_date_for_due(bill.due_date, account.statement_close_day),
+            today=today,
+            amount=amount,
+            amount_primary=amount_primary,
+        )
+
+    close_day = account.statement_close_day
+    due_day = account.payment_due_day
+    if bills and close_day and due_day:
+        start, end, close = _cycle_containing(close_day, today)
+        newest = bills[-1]
+        unbilled_only = start >= _close_date_for_due(newest.due_date, close_day)
+        amounts = await _projected_bill_amounts(
+            session, account, workspace_id, primary_currency, start, end,
+            bill_id=None, unbilled_only=unbilled_only,
+        )
+        if amounts is None:
+            return None
+        amount, amount_primary = amounts
+        return _open_bill_row(
+            account,
+            due=_due_strictly_after(end, due_day),
+            close=close,
+            today=today,
+            amount=amount,
+            amount_primary=amount_primary,
+        )
+
+    if not bills and close_day and due_day:
+        cycle = get_cycle_dates(close_day, due_day, today)
+        close = cycle["next_close_date"]
+        due = cycle["next_due_date"]
+        if close is None or due is None:
+            return None
+        start, end, _ = _cycle_containing(close_day, close - timedelta(days=1))
+        amounts = await _projected_bill_amounts(
+            session, account, workspace_id, primary_currency, start, end,
+            bill_id=None, unbilled_only=False,
+        )
+        if amounts is None:
+            return None
+        amount, amount_primary = amounts
+        return _open_bill_row(
+            account,
+            due=due,
+            close=close,
+            today=today,
+            amount=amount,
+            amount_primary=amount_primary,
+        )
+
+    return None
+
+
+async def get_credit_card_bills(
+    session: AsyncSession,
+    workspace_id: uuid.UUID,
+    user_id: uuid.UUID,
+):
+    """Open credit-card bills for the dashboard, one row per card (or shared line).
+
+    Does not take a month: the current bill is always the one due today or
+    later. Shared credit lines collapse the way `sumAccountBalances` does —
+    the first account of the group in `Account.name` order is the one row,
+    and its amount is counted once.
+    """
+    from app.models.credit_card_bill import CreditCardBill
+    from app.schemas.dashboard import OpenCreditCardBill, OpenCreditCardBills
+    from sqlalchemy.orm import contains_eager
+
+    today = app_today()
+    user = await session.get(User, user_id)
+    primary_currency = user.primary_currency if user else get_settings().default_currency
+
+    account_rows = await session.execute(
+        select(Account)
+        .outerjoin(BankConnection, Account.connection_id == BankConnection.id)
+        .where(
+            Account.type == "credit_card",
+            Account.is_closed == False,
+            or_(
+                Account.workspace_id == workspace_id,
+                BankConnection.workspace_id == workspace_id,
+            ),
+        )
+        .options(contains_eager(Account.connection), selectinload(Account.institution))
+        .order_by(Account.name, Account.id)
+    )
+    accounts = list(account_rows.scalars().unique().all())
+    if not accounts:
+        return OpenCreditCardBills()
+
+    account_ids = [account.id for account in accounts]
+    bill_rows = await session.execute(
+        select(CreditCardBill)
+        .where(CreditCardBill.account_id.in_(account_ids))
+        .order_by(CreditCardBill.due_date, CreditCardBill.id)
+    )
+    bills_by_account: dict[uuid.UUID, list] = {account_id: [] for account_id in account_ids}
+    for bill in bill_rows.scalars().all():
+        bills_by_account.setdefault(bill.account_id, []).append(bill)
+
+    # Walk name order, same as the accounts list `sumAccountBalances` receives.
+    # A shared line keeps the first eligible card and drops the rest.
+    seen_groups: set[str] = set()
+    kept: list[dict] = []
+    for account in accounts:
+        row = await _resolve_open_bill(
+            session,
+            account,
+            bills_by_account.get(account.id, []),
+            workspace_id,
+            today,
+            primary_currency,
+        )
+        if row is None:
+            continue
+        group = account.shared_balance_group
+        if group:
+            if group in seen_groups:
+                continue
+            seen_groups.add(group)
+        kept.append(row)
+
+    kept.sort(key=lambda row: (row["due_date"], row["account_name"]))
+    total_primary = round(sum(row["amount_primary"] for row in kept), 2) if kept else 0.0
+    earliest = min((row["due_date"] for row in kept), default=None)
+    return OpenCreditCardBills(
+        items=[OpenCreditCardBill(**row) for row in kept],
+        total_primary=total_primary,
+        accounts_count=len(kept),
+        earliest_due_date=earliest,
+    )

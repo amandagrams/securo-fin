@@ -880,7 +880,10 @@
     "fxRateUsed": "Taux de change : {{rate}}",
     "refreshRates": "Actualiser les taux de change",
     "ratesRefreshed": "Taux de change mis à jour",
-    "ratesError": "Échec de la mise à jour des taux de change"
+    "ratesError": "Échec de la mise à jour des taux de change",
+    "openBills": "Factures ouvertes",
+    "openBillsSubtitle": "{{count}} cartes · échéance {{date}}",
+    "openBillsDue": "échéance {{date}}"
   },
   "transactions": {
     "title": "Transactions",
