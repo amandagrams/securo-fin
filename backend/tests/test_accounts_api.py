@@ -299,6 +299,12 @@ async def test_credit_card_account_returns_negative_current_balance(
     The stored balance remains positive (raw from bank), but the API returns
     current_balance negated so consumers see it as a liability.
     """
+    checking_resp = await client.post(
+        "/api/accounts",
+        headers=auth_headers,
+        json={"name": "Conta", "type": "checking", "balance": "0.00", "currency": "BRL"},
+    )
+    assert checking_resp.status_code == 201
     create_resp = await client.post(
         "/api/accounts",
         headers=auth_headers,
@@ -307,6 +313,7 @@ async def test_credit_card_account_returns_negative_current_balance(
             "type": "credit_card",
             "balance": "3500.00",
             "currency": "BRL",
+            "payment_account_id": checking_resp.json()["id"],
         },
     )
     assert create_resp.status_code == 201
@@ -353,7 +360,13 @@ async def test_dashboard_total_balance_subtracts_credit_card_debt(
     cc_resp = await client.post(
         "/api/accounts",
         headers=auth_headers,
-        json={"name": "Credit Card", "type": "credit_card", "balance": "2000.00", "currency": "BRL"},
+        json={
+            "name": "Credit Card",
+            "type": "credit_card",
+            "balance": "2000.00",
+            "currency": "BRL",
+            "payment_account_id": checking_resp.json()["id"],
+        },
     )
     assert cc_resp.status_code == 201
 
@@ -372,6 +385,12 @@ async def test_credit_card_summary_returns_negative_balance(
     client: AsyncClient, auth_headers
 ):
     """Account summary for a credit card should return negative current_balance."""
+    checking_resp = await client.post(
+        "/api/accounts",
+        headers=auth_headers,
+        json={"name": "Conta", "type": "checking", "balance": "0.00", "currency": "BRL"},
+    )
+    assert checking_resp.status_code == 201
     create_resp = await client.post(
         "/api/accounts",
         headers=auth_headers,
@@ -380,6 +399,7 @@ async def test_credit_card_summary_returns_negative_balance(
             "type": "credit_card",
             "balance": "1200.00",
             "currency": "BRL",
+            "payment_account_id": checking_resp.json()["id"],
         },
     )
     assert create_resp.status_code == 201

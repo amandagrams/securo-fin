@@ -13,7 +13,7 @@ import { invalidateFinancialQueries } from '@/lib/invalidate-queries'
 import { shouldShowPendingBadge } from '@/lib/transaction-status'
 import { closeDateForBill, isOpenCycleWindow } from '@/lib/credit-card-cycle'
 import { toast } from 'sonner'
-import type { CreditCardBill, ProjectedTransaction, Transaction } from '@/types'
+import type { Account, AccountCard, CreditCardBill, ProjectedTransaction, Transaction } from '@/types'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Button } from '@/components/ui/button'
 import { ArrowLeft, ArrowLeftRight, CalendarClock, ChevronLeft, ChevronRight, Clock, EyeClosed, HelpCircle, Paperclip, Pencil, Plus, X } from 'lucide-react'
@@ -653,7 +653,12 @@ export default function AccountDetailPage() {
       settings,
       cardNames,
     }: {
-      settings: { credit_limit?: number | null; statement_close_day?: number | null; payment_due_day?: number | null }
+      settings: {
+        credit_limit?: number | null
+        statement_close_day?: number | null
+        payment_due_day?: number | null
+        payment_account_id?: string | null
+      }
       cardNames: { card_number: string; name: string }[]
     }) => {
       await accounts.update(id!, settings)
@@ -1868,6 +1873,7 @@ export default function AccountDetailPage() {
           open={ccSettingsOpen}
           onClose={() => setCcSettingsOpen(false)}
           account={account}
+          accounts={accountsList ?? []}
           cards={accountCards}
           cardsLoading={accountCardsLoading}
           onSave={(settings, cardNames) => ccSettingsMutation.mutate({ settings, cardNames })}
@@ -1882,6 +1888,7 @@ function CreditCardSettingsDialog({
   open,
   onClose,
   account,
+  accounts,
   cards,
   cardsLoading,
   onSave,
@@ -1889,11 +1896,22 @@ function CreditCardSettingsDialog({
 }: {
   open: boolean
   onClose: () => void
-  account: { credit_limit: number | null; statement_close_day: number | null; payment_due_day: number | null }
+  account: {
+    credit_limit: number | null
+    statement_close_day: number | null
+    payment_due_day: number | null
+    payment_account_id: string | null
+  }
+  accounts: Account[]
   cards: AccountCard[] | undefined
   cardsLoading: boolean
   onSave: (
-    settings: { credit_limit: number | null; statement_close_day: number | null; payment_due_day: number | null },
+    settings: {
+      credit_limit: number | null
+      statement_close_day: number | null
+      payment_due_day: number | null
+      payment_account_id: string | null
+    },
     cardNames: { card_number: string; name: string }[],
   ) => void
   loading: boolean
@@ -1902,9 +1920,11 @@ function CreditCardSettingsDialog({
   const [creditLimit, setCreditLimit] = useState('')
   const [closeDay, setCloseDay] = useState('')
   const [dueDay, setDueDay] = useState('')
+  const [paymentAccountId, setPaymentAccountId] = useState('')
   const [cardNames, setCardNames] = useState<Record<string, string>>({})
+  const checkingAccounts = accounts.filter((row) => row.type === 'checking' && !row.is_closed)
 
-  const formKey = JSON.stringify([open, account.credit_limit, account.statement_close_day, account.payment_due_day, cards])
+  const formKey = JSON.stringify([open, account.credit_limit, account.statement_close_day, account.payment_due_day, account.payment_account_id, cards])
   const [previousFormKey, setPreviousFormKey] = useState<string | null>(null)
   if (formKey !== previousFormKey) {
     setPreviousFormKey(formKey)
@@ -1912,6 +1932,7 @@ function CreditCardSettingsDialog({
       setCreditLimit(account.credit_limit != null ? String(account.credit_limit) : '')
       setCloseDay(account.statement_close_day != null ? String(account.statement_close_day) : '')
       setDueDay(account.payment_due_day != null ? String(account.payment_due_day) : '')
+      setPaymentAccountId(account.payment_account_id ?? '')
       setCardNames(Object.fromEntries((cards ?? []).map((c) => [c.card_number, c.name ?? ''])))
     }
   }
@@ -1935,6 +1956,7 @@ function CreditCardSettingsDialog({
                 credit_limit: creditLimit !== '' ? parseFloat(creditLimit) : null,
                 statement_close_day: parseDay(closeDay),
                 payment_due_day: parseDay(dueDay),
+                payment_account_id: paymentAccountId || null,
               },
               // Only the names that changed; equal strings make no request.
               (cards ?? [])
@@ -1959,6 +1981,21 @@ function CreditCardSettingsDialog({
               onChange={(e) => setCreditLimit(e.target.value)}
               placeholder="0.00"
             />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="card-payment-account">{t('accounts.paymentAccount')}</Label>
+            <select
+              id="card-payment-account"
+              aria-label={t('accounts.paymentAccount')}
+              className="w-full border border-border rounded-lg px-3 py-2 text-sm bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+              value={paymentAccountId}
+              onChange={(e) => setPaymentAccountId(e.target.value)}
+            >
+              <option value="" />
+              {checkingAccounts.map((checking) => (
+                <option key={checking.id} value={checking.id}>{getAccountName(checking)}</option>
+              ))}
+            </select>
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">

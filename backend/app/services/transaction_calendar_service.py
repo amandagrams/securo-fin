@@ -11,6 +11,7 @@ from app.core.app_clock import app_today
 from app.core.config import get_settings
 from app.models.account import Account
 from app.models.category import Category
+from app.models.credit_card_bill import CreditCardBill
 from app.models.recurring_transaction import RecurringTransaction
 from app.models.transaction import Transaction
 from app.models.user import User
@@ -24,6 +25,7 @@ from app.services.dashboard_service import (
     _daily_balance_deltas_by_date,
     _get_forecast_transactions,
 )
+from app.services.credit_card_service import compute_effective_date
 from app.services.fx_rate_service import convert as fx_convert
 from app.services.recurring_transaction_service import (
     adjust_weekend_date,
@@ -62,11 +64,23 @@ async def get_transaction_calendar(
     user = await session.get(User, user_id)
     primary_currency = user.primary_currency if user else get_settings().default_currency
 
+    # None means "every open checking account". An explicit filter keeps the
+    # accounts the caller named, so a card filtered on its own id still shows
+    # the card's movements and does not receive a bill payment.
+    original_account_ids = account_ids
     requested_account_ids = account_ids
     if requested_account_ids is not None and len(requested_account_ids) == 0:
         return _empty_calendar(
-            month_start, grid_start, grid_end, primary_currency, requested_account_ids
+            month_start, grid_start, grid_end, primary_currency, original_account_ids,
+            actual_balance=0.0,
         )
+    if requested_account_ids is None:
+        requested_account_ids = await _open_checking_ids(session, workspace_id)
+        if not requested_account_ids:
+            return _empty_calendar(
+                month_start, grid_start, grid_end, primary_currency, None,
+                actual_balance=0.0,
+            )
 
     days = {
         d: TransactionCalendarDay(
@@ -220,6 +234,16 @@ async def get_transaction_calendar(
     for delta_date, delta in forecast_deltas.items():
         balance_deltas[delta_date] = balance_deltas.get(delta_date, 0.0) + delta
 
+    start_balance += await _project_card_bills(
+        session,
+        primary_currency,
+        grid_start,
+        grid_end,
+        requested_account_ids,
+        days,
+        balance_deltas,
+    )
+
     running = start_balance
     response_days: list[TransactionCalendarDay] = []
     for d in _date_range(grid_start, grid_end):
@@ -238,10 +262,19 @@ async def get_transaction_calendar(
         day.items.sort(key=lambda item: (item.kind != "actual", item.type, item.description.lower()))
         response_days.append(day)
 
+    actual_balance = await _balance_at(
+        session,
+        workspace_id,
+        app_today(),
+        primary_currency_hint=primary_currency,
+        account_ids=requested_account_ids,
+        include_pending=False,
+    )
     return TransactionCalendarResponse(
         month=month_start.strftime("%Y-%m"),
         currency=primary_currency,
-        account_ids=requested_account_ids,
+        account_ids=original_account_ids,
+        actual_balance=round(actual_balance, 2),
         days=response_days,
     )
 
@@ -251,12 +284,15 @@ def _empty_calendar(
     grid_start: date,
     grid_end: date,
     primary_currency: str,
-    account_ids: list[uuid.UUID],
+    account_ids: list[uuid.UUID] | None,
+    *,
+    actual_balance: float = 0.0,
 ) -> TransactionCalendarResponse:
     return TransactionCalendarResponse(
         month=month_start.strftime("%Y-%m"),
         currency=primary_currency,
         account_ids=account_ids,
+        actual_balance=actual_balance,
         days=[
             TransactionCalendarDay(
                 date=d,
@@ -519,3 +555,256 @@ async def _project_recurring_items(
             if not is_ignored:
                 deltas[occ_date] = deltas.get(occ_date, 0.0) + signed_delta
     return items, deltas, carried_delta
+
+
+async def _open_checking_ids(session: AsyncSession, workspace_id: uuid.UUID) -> list[uuid.UUID]:
+    result = await session.scalars(
+        select(Account.id).where(
+            Account.workspace_id == workspace_id,
+            Account.is_closed == False,
+            Account.type == "checking",
+        )
+    )
+    return list(result.all())
+
+
+def _native_amount(tx: Transaction, account_currency: str) -> Decimal:
+    if tx.currency == account_currency:
+        return abs(Decimal(str(tx.amount)))
+    return abs(Decimal(str(tx.amount_primary if tx.amount_primary is not None else tx.amount)))
+
+
+async def _project_card_bills(
+    session: AsyncSession,
+    primary_currency: str,
+    grid_start: date,
+    grid_end: date,
+    account_ids: list[uuid.UUID],
+    days: dict[date, TransactionCalendarDay],
+    balance_deltas: dict[date, float],
+) -> float:
+    """Drop each linked card's bill on its payment account, once, on the due date.
+
+    A future due date before the grid is carried into the opening balance and
+    is not listed. A due date of today or earlier is left alone: it is not
+    part of the posted balance and it is not moved onto today. A transfer
+    already sitting on the payment account that day, paired with the card,
+    is the payment, so the synthetic line is not added on top of it.
+    """
+    if not account_ids:
+        return 0.0
+    today = app_today()
+    cards = list(
+        (
+            await session.scalars(
+                select(Account).where(
+                    Account.type == "credit_card",
+                    Account.is_closed == False,
+                    Account.payment_account_id.is_not(None),
+                    Account.payment_account_id.in_(account_ids),
+                )
+            )
+        ).all()
+    )
+    if not cards:
+        return 0.0
+
+    payment_ids = {card.payment_account_id for card in cards if card.payment_account_id}
+    payments = {
+        account.id: account
+        for account in (
+            await session.scalars(select(Account).where(Account.id.in_(payment_ids)))
+        ).all()
+    }
+    cards = [
+        card
+        for card in cards
+        if (payment := payments.get(card.payment_account_id)) is not None
+        and payment.type == "checking"
+        and not payment.is_closed
+        and payment.id in account_ids
+    ]
+    if not cards:
+        return 0.0
+
+    card_ids = [card.id for card in cards]
+    bill_rows = list(
+        (
+            await session.scalars(
+                select(CreditCardBill).where(
+                    CreditCardBill.account_id.in_(card_ids),
+                    CreditCardBill.due_date > today,
+                    CreditCardBill.due_date < grid_end,
+                )
+            )
+        ).all()
+    )
+    bills_by_card: dict[uuid.UUID, dict[date, list[CreditCardBill]]] = {}
+    for bill in bill_rows:
+        bills_by_card.setdefault(bill.account_id, {}).setdefault(bill.due_date, []).append(bill)
+
+    # A monthly cycle never reaches further back than this. The purchase stays
+    # on the card; only its due date is projected onto the checking account.
+    tx_rows = list(
+        (
+            await session.scalars(
+                select(Transaction)
+                .where(
+                    Transaction.account_id.in_(card_ids),
+                    Transaction.is_ignored == False,
+                    Transaction.source != "opening_balance",
+                    Transaction.date >= today - timedelta(days=80),
+                    Transaction.date < grid_end,
+                )
+                .options(selectinload(Transaction.category))
+            )
+        ).all()
+    )
+    txs_by_card: dict[uuid.UUID, list[Transaction]] = {}
+    for tx in tx_rows:
+        if tx.category is not None and tx.category.is_ignored:
+            continue
+        txs_by_card.setdefault(tx.account_id, []).append(tx)
+
+    suppressed = await _bill_payments_on_due_dates(
+        session, [card.payment_account_id for card in cards if card.payment_account_id],
+        set(card_ids), today, grid_end,
+    )
+
+    carried = 0.0
+    for card in cards:
+        payment = payments[card.payment_account_id]
+        owed_by_due = _cycle_amounts_by_due(card, txs_by_card.get(card.id, []), today, grid_end)
+        due_dates = set(owed_by_due) | set(bills_by_card.get(card.id, {}))
+        for due in sorted(due_dates):
+            if not (today < due < grid_end):
+                continue
+            if (payment.id, card.id, due) in suppressed:
+                continue
+            bill_lines = bills_by_card.get(card.id, {}).get(due)
+            if bill_lines:
+                owed = sum((Decimal(str(line.total_amount)) for line in bill_lines), Decimal("0"))
+                currency = bill_lines[0].currency or card.currency
+            else:
+                owed = owed_by_due.get(due, Decimal("0"))
+                currency = card.currency
+            if owed == 0:
+                continue
+            magnitude = abs(owed)
+            converted, _ = await fx_convert(
+                session, magnitude, currency, primary_currency, allow_fetch=False
+            )
+            signed = float(-converted if owed > 0 else converted)
+            if due < grid_start:
+                carried += signed
+                continue
+            day = days.get(due)
+            if day is None:
+                continue
+            amount_primary = float(abs(converted))
+            item_type: Literal["debit", "credit"] = "debit" if owed > 0 else "credit"
+            day.items.append(
+                TransactionCalendarItem(
+                    kind="projected",
+                    date=due,
+                    description=card.display_name or card.name,
+                    amount=float(magnitude),
+                    amount_primary=amount_primary,
+                    currency=currency,
+                    type=item_type,
+                    account_id=payment.id,
+                    account_name=payment.display_name or payment.name,
+                )
+            )
+            day.projected_count += 1
+            if item_type == "credit":
+                day.income += amount_primary
+                day.projected_income += amount_primary
+                day.has_income = True
+            else:
+                day.expense += amount_primary
+                day.projected_expense += amount_primary
+                day.has_expense = True
+            balance_deltas[due] = balance_deltas.get(due, 0.0) + signed
+    return carried
+
+
+def _cycle_amounts_by_due(
+    card: Account,
+    transactions: list[Transaction],
+    today: date,
+    grid_end: date,
+) -> dict[date, Decimal]:
+    """Net amount owed on each future due date, in the card's currency.
+
+    Recomputed from the close and due days. The stored effective_date is not
+    used: a row inserted without cycle math keeps the purchase date, and
+    projecting that would charge the checking account on the day of the purchase.
+    """
+    owed: dict[date, Decimal] = {}
+    if not card.statement_close_day or not card.payment_due_day:
+        return owed
+    for tx in transactions:
+        due = compute_effective_date(tx.date, card.statement_close_day, card.payment_due_day)
+        if not (today < due < grid_end):
+            continue
+        native = _native_amount(tx, card.currency)
+        owed[due] = owed.get(due, Decimal("0")) + (native if tx.type == "debit" else -native)
+    return owed
+
+
+async def _bill_payments_on_due_dates(
+    session: AsyncSession,
+    payment_account_ids: list[uuid.UUID],
+    card_ids: set[uuid.UUID],
+    today: date,
+    grid_end: date,
+) -> set[tuple[uuid.UUID, uuid.UUID, date]]:
+    """Transfers on a payment account whose other leg is the card.
+
+    The pair is the scheduled payment, so the synthetic bill line for that
+    due date must not be added again.
+    """
+    if not payment_account_ids:
+        return set()
+    legs = list(
+        (
+            await session.scalars(
+                select(Transaction)
+                .where(
+                    Transaction.account_id.in_(payment_account_ids),
+                    Transaction.transfer_pair_id.is_not(None),
+                    Transaction.date > today,
+                    Transaction.date < grid_end,
+                    Transaction.is_ignored == False,
+                )
+                .options(selectinload(Transaction.category))
+            )
+        ).all()
+    )
+    legs = [tx for tx in legs if not (tx.category and tx.category.is_ignored)]
+    if not legs:
+        return set()
+    pair_ids = {tx.transfer_pair_id for tx in legs}
+    partners = list(
+        (
+            await session.scalars(
+                select(Transaction).where(
+                    Transaction.transfer_pair_id.in_(pair_ids),
+                    Transaction.account_id.in_(card_ids),
+                )
+            )
+        ).all()
+    )
+    partner_accounts = {
+        tx.transfer_pair_id: tx.account_id
+        for tx in partners
+        if tx.account_id in card_ids
+    }
+    suppressed: set[tuple[uuid.UUID, uuid.UUID, date]] = set()
+    for tx in legs:
+        card_id = partner_accounts.get(tx.transfer_pair_id)
+        if card_id is None or tx.account_id is None:
+            continue
+        suppressed.add((tx.account_id, card_id, tx.date))
+    return suppressed

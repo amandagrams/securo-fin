@@ -58,4 +58,7 @@ class TransactionCalendarResponse(BaseModel):
     month: str
     currency: str
     account_ids: list[uuid.UUID] | None = None
+    # Posted balance through today, in the primary currency. Pending rows,
+    # future-dated rows, virtual recurrences and card bills stay out of it.
+    actual_balance: float = 0.0
     days: list[TransactionCalendarDay]

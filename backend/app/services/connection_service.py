@@ -1135,6 +1135,9 @@ async def handle_oauth_callback(
                 if acc_data.shared_balance_group else None
             ),
             institution_id=institution.id if institution else None,
+            # The user chooses which checking account pays the bill. Sync
+            # never invents that link.
+            payment_account_id=None,
         )
         session.add(account)
         await session.flush()
@@ -2084,6 +2087,10 @@ async def sync_connection(
                         if acc_data.shared_balance_group else None
                     ),
                     institution_id=institution.id if institution else None,
+                    # The user chooses which checking account pays the bill.
+                    # Sync never invents that link, and a later sync does not
+                    # clear one the user already set.
+                    payment_account_id=None,
                 )
                 session.add(account)
                 await session.flush()
