@@ -186,6 +186,6 @@ edição é pontual; locales ~2 KB):
 
 **Um batch só**: S1 não cruza 150k. Não há fronteira no meio da task.
 
-- **Onde caiu a fronteira**: um batch só, S1 = C1–C15. SHA no commit do batch.
-- **O que o usuário decidiu no meio do build**: nada ainda.
-- **O que foi abandonado**: nada ainda.
+- **Onde caiu a fronteira**: não houve handoff no meio. Checklist em `fe9455c`. S1 (C1–C15) no commit `1329ab7`.
+- **O que o usuário decidiu no meio do build**: nada — nenhuma clarificação nem renegociação. As portas novas (faixa compartilhada, copy nova da lista, `future_committed_total` na moeda da conta, os três blocos dentro do `Link`) estão em `Landing` e não contradizem a task.
+- **O que foi abandonado**: nada tentado e descartado. Aviso ao próximo agente que o diff não mostra: `npm ci` em `frontend/` antes do vitest. `getByText` / `toHaveTextContent` normalizam o NBSP do `Intl` no nó e não na string esperada — os proofs de valor comparam `textContent` com `formatCurrency` e, à parte, o literal do critério sem whitespace. `account-detail.tsx` só troca o `import` de `utilizationColor`; o corpo da função foi para `src/lib/credit-utilization.ts`.
