@@ -292,12 +292,13 @@ describe('fatura por cartão', () => {
   it('orders groups with the account card first then lexicographic then no card', async () => {
     api.transactions.list.mockResolvedValue({
       items: [
-        makeTx({ amount: 1, card_number: '0597' }),
-        makeTx({ amount: 2, card_number: null }),
-        makeTx({ amount: 3, card_number: '1234' }),
+        makeTx({ description: 'MAIS NOVA', amount: 1, card_number: '1234', date: '2026-09-10' }),
+        makeTx({ description: 'MAIS ANTIGA', amount: 2, card_number: '1234', date: '2026-09-01' }),
+        makeTx({ amount: 3, card_number: '0597' }),
         makeTx({ amount: 4, card_number: '0444' }),
+        makeTx({ amount: 5, card_number: null }),
       ],
-      total: 4,
+      total: 5,
     })
     await renderPage()
 
@@ -307,6 +308,10 @@ describe('fatura por cartão', () => {
     expect(headers[1]).toContain('•••• 0444')
     expect(headers[2]).toContain('•••• 0597')
     expect(headers[3]).toContain('No card')
+    // Critério 7: dentro do grupo, a ordem relativa é a da lista da fatura
+    // (mais recente primeiro no grupo da conta).
+    const table = document.querySelector('tbody')?.textContent ?? ''
+    expect(table.indexOf('MAIS NOVA')).toBeLessThan(table.indexOf('MAIS ANTIGA'))
   })
 
   it('starts at lexicographic order when masked_number is null', async () => {
