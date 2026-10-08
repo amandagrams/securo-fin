@@ -1201,6 +1201,8 @@
     "minimumPayment": "Mindestbetrag",
     "noChargesYet": "Noch keine Umsätze in diesem Abrechnungszeitraum",
     "noCard": "Keine Karte",
+    "upcomingBills": "Kommende Rechnungen",
+    "upcomingBillsEstimate": "Schätzung aus bekannten Raten und Buchungen",
     "cardNames": "Kartennamen",
     "noCardsSeen": "Auf diesem Konto wurde noch keine Karte gesehen.",
     "currentTag": "jetzt",

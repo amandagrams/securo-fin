@@ -1217,6 +1217,8 @@
     "minimumPayment": "Мінімум",
     "noChargesYet": "У цьому циклі поки немає нарахувань",
     "noCard": "Без картки",
+    "upcomingBills": "Найближчі рахунки",
+    "upcomingBillsEstimate": "оцінка за вже відомими внесками та списаннями",
     "cardNames": "Назви карток",
     "noCardsSeen": "На цьому рахунку ще не було жодної картки.",
     "currentTag": "зараз",

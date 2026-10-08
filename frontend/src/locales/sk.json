@@ -1256,6 +1256,8 @@
     "minimumPayment": "Minimum",
     "noChargesYet": "V tomto cykle zatiaľ žiadne čerpanie",
     "noCard": "Bez karty",
+    "upcomingBills": "Nadchádzajúce faktúry",
+    "upcomingBillsEstimate": "odhad zo známych splátok a pohybov",
     "cardNames": "Názvy kariet",
     "noCardsSeen": "Na tomto účte zatiaľ nebola zaznamenaná žiadna karta.",
     "currentTag": "teraz",

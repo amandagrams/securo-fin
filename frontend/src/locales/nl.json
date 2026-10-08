@@ -1201,6 +1201,8 @@
     "minimumPayment": "Minimaal",
     "noChargesYet": "Nog geen kosten deze cyclus",
     "noCard": "Geen kaart",
+    "upcomingBills": "Komende facturen",
+    "upcomingBillsEstimate": "schatting op basis van bekende termijnen en boekingen",
     "cardNames": "Kaartnamen",
     "noCardsSeen": "Er is nog geen kaart op dit account gezien.",
     "currentTag": "nu",

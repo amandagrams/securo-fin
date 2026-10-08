@@ -92,6 +92,35 @@ class CreditCardBillRead(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
+class UpcomingBillCycleRead(BaseModel):
+    """One future credit-card cycle and what is already committed to it.
+
+    `committed_total` is in the account currency. `committed_total_primary`
+    is the same commitment in the user's primary currency, taken from stored
+    `amount_primary` (and from the anchor parcel, for a projected installment).
+    """
+
+    due_date: date
+    close_date: date
+    committed_total: float
+    committed_total_primary: float
+    currency: str
+
+
+class UpcomingBillsRead(BaseModel):
+    """Future cycles after the one in progress.
+
+    `cycles` has one entry per requested cycle, ascending by due_date, zeros
+    included. The two future totals cover every future cycle, not only the
+    ones listed. Both totals are null when the account is not a credit card
+    with a close day and a due day — zero would mean "nothing committed".
+    """
+
+    cycles: list[UpcomingBillCycleRead]
+    future_committed_total: Optional[float] = None
+    future_committed_total_primary: Optional[float] = None
+
+
 class AccountCardRead(BaseModel):
     """A card seen on this account's transactions, with the name the user
     gave it. The list is what the bill saw: a card that never appeared on a
