@@ -199,6 +199,14 @@ export interface CreditCardBill {
   minimum_payment: number | null
 }
 
+/** A card seen on an account's transactions and the name the user gave it.
+ *  Keyed by (account, card_number); not an account — no balance, no limit.
+ *  Only cards that appeared on at least one transaction are listed. */
+export interface AccountCard {
+  card_number: string
+  name: string | null
+}
+
 export interface Collection {
   id: string
   user_id: string

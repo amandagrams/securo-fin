@@ -640,9 +640,28 @@ export default function AccountDetailPage() {
   })
 
   const [ccSettingsOpen, setCcSettingsOpen] = useState(false)
+  // The cards seen on this account's transactions, with the names the user
+  // gave them. Feeds the group titles on the bill and the name fields in
+  // the settings dialog.
+  const { data: accountCards, isLoading: accountCardsLoading } = useQuery({
+    queryKey: ['accounts', id, 'cards'],
+    queryFn: () => accounts.cards(id!),
+    enabled: !!id && account?.type === 'credit_card',
+  })
   const ccSettingsMutation = useMutation({
-    mutationFn: (data: { credit_limit?: number | null; statement_close_day?: number | null; payment_due_day?: number | null }) =>
-      accounts.update(id!, data),
+    mutationFn: async ({
+      settings,
+      cardNames,
+    }: {
+      settings: { credit_limit?: number | null; statement_close_day?: number | null; payment_due_day?: number | null }
+      cardNames: { card_number: string; name: string }[]
+    }) => {
+      await accounts.update(id!, settings)
+      // Only the names that actually changed; a blank name clears to null.
+      for (const change of cardNames) {
+        await accounts.updateCard(id!, change.card_number, change.name)
+      }
+    },
     onSuccess: () => {
       invalidateFinancialQueries(queryClient)
       setCcSettingsOpen(false)
@@ -889,9 +908,14 @@ export default function AccountDetailPage() {
   const isLoading = accountLoading || summaryLoading
 
   // "Amanda •••• 0597" once a card has a name (S3); until then the mask
-  // alone, and the no-card bucket by its translated title.
-  const cardGroupTitle = (cardNumber: string | null) =>
-    formatCardMask(cardNumber) ?? t('accounts.noCard')
+  // alone, and the no-card bucket by its translated title. Rows inside the
+  // group keep showing only the mask — the name belongs to the title.
+  const cardGroupTitle = (cardNumber: string | null) => {
+    const cardMask = formatCardMask(cardNumber)
+    if (!cardMask) return t('accounts.noCard')
+    const name = accountCards?.find((c) => c.card_number === cardNumber)?.name
+    return name ? `${name} ${cardMask}` : cardMask
+  }
 
   if (isLoading) {
     return (
@@ -1844,7 +1868,9 @@ export default function AccountDetailPage() {
           open={ccSettingsOpen}
           onClose={() => setCcSettingsOpen(false)}
           account={account}
-          onSave={(data) => ccSettingsMutation.mutate(data)}
+          cards={accountCards}
+          cardsLoading={accountCardsLoading}
+          onSave={(settings, cardNames) => ccSettingsMutation.mutate({ settings, cardNames })}
           loading={ccSettingsMutation.isPending}
         />
       )}
@@ -1856,21 +1882,29 @@ function CreditCardSettingsDialog({
   open,
   onClose,
   account,
+  cards,
+  cardsLoading,
   onSave,
   loading,
 }: {
   open: boolean
   onClose: () => void
   account: { credit_limit: number | null; statement_close_day: number | null; payment_due_day: number | null }
-  onSave: (data: { credit_limit: number | null; statement_close_day: number | null; payment_due_day: number | null }) => void
+  cards: AccountCard[] | undefined
+  cardsLoading: boolean
+  onSave: (
+    settings: { credit_limit: number | null; statement_close_day: number | null; payment_due_day: number | null },
+    cardNames: { card_number: string; name: string }[],
+  ) => void
   loading: boolean
 }) {
   const { t } = useTranslation()
   const [creditLimit, setCreditLimit] = useState('')
   const [closeDay, setCloseDay] = useState('')
   const [dueDay, setDueDay] = useState('')
+  const [cardNames, setCardNames] = useState<Record<string, string>>({})
 
-  const formKey = JSON.stringify([open, account.credit_limit, account.statement_close_day, account.payment_due_day])
+  const formKey = JSON.stringify([open, account.credit_limit, account.statement_close_day, account.payment_due_day, cards])
   const [previousFormKey, setPreviousFormKey] = useState<string | null>(null)
   if (formKey !== previousFormKey) {
     setPreviousFormKey(formKey)
@@ -1878,6 +1912,7 @@ function CreditCardSettingsDialog({
       setCreditLimit(account.credit_limit != null ? String(account.credit_limit) : '')
       setCloseDay(account.statement_close_day != null ? String(account.statement_close_day) : '')
       setDueDay(account.payment_due_day != null ? String(account.payment_due_day) : '')
+      setCardNames(Object.fromEntries((cards ?? []).map((c) => [c.card_number, c.name ?? ''])))
     }
   }
 
@@ -1895,11 +1930,17 @@ function CreditCardSettingsDialog({
         <form
           onSubmit={(e) => {
             e.preventDefault()
-            onSave({
-              credit_limit: creditLimit !== '' ? parseFloat(creditLimit) : null,
-              statement_close_day: parseDay(closeDay),
-              payment_due_day: parseDay(dueDay),
-            })
+            onSave(
+              {
+                credit_limit: creditLimit !== '' ? parseFloat(creditLimit) : null,
+                statement_close_day: parseDay(closeDay),
+                payment_due_day: parseDay(dueDay),
+              },
+              // Only the names that changed; equal strings make no request.
+              (cards ?? [])
+                .filter((c) => (cardNames[c.card_number] ?? '') !== (c.name ?? ''))
+                .map((c) => ({ card_number: c.card_number, name: cardNames[c.card_number] ?? '' })),
+            )
           }}
           className="space-y-4"
         >
@@ -1943,6 +1984,36 @@ function CreditCardSettingsDialog({
               />
             </div>
           </div>
+          {/* Names for the cards seen on this account's bills (additional /
+              virtual cards). While the list loads no field shows; an account
+              that never saw a card_number says so instead of an empty list. */}
+          {!cardsLoading && (
+            <div className="space-y-2 pt-3 border-t border-border">
+              <Label>{t('accounts.cardNames')}</Label>
+              {(cards ?? []).length === 0 ? (
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  {t('accounts.noCardsSeen')}
+                </p>
+              ) : (
+                (cards ?? []).map((card) => (
+                  <div key={card.card_number} className="flex items-center gap-3">
+                    <span className="w-24 shrink-0 text-sm tabular-nums text-muted-foreground">
+                      {formatCardMask(card.card_number)}
+                    </span>
+                    <Input
+                      data-testid="card-name-input"
+                      aria-label={formatCardMask(card.card_number) ?? card.card_number}
+                      value={cardNames[card.card_number] ?? ''}
+                      maxLength={255}
+                      onChange={(e) =>
+                        setCardNames((names) => ({ ...names, [card.card_number]: e.target.value }))
+                      }
+                    />
+                  </div>
+                ))
+              )}
+            </div>
+          )}
           <DialogFooter>
             <Button type="button" variant="outline" onClick={onClose}>
               {t('common.cancel')}

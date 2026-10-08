@@ -1256,6 +1256,8 @@
     "minimumPayment": "Minimum",
     "noChargesYet": "V tomto cykle zatiaľ žiadne čerpanie",
     "noCard": "Bez karty",
+    "cardNames": "Názvy kariet",
+    "noCardsSeen": "Na tomto účte zatiaľ nebola zaznamenaná žiadna karta.",
     "currentTag": "teraz",
     "overdueDays": "{{count}} dní po splatnosti",
     "overdueDays_one": "{{count}} deň po splatnosti",

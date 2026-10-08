@@ -1217,6 +1217,8 @@
     "minimumPayment": "Минимум",
     "noChargesYet": "В этом цикле пока нет начислений",
     "noCard": "Без карты",
+    "cardNames": "Имена карт",
+    "noCardsSeen": "По этому счёту пока не было ни одной карты.",
     "currentTag": "сейчас",
     "overdueDays": "Просрочено на {{count}} дней",
     "dueIn": "Осталось {{count}} дней",

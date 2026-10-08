@@ -1244,6 +1244,8 @@
     "minimumPayment": "Minimalna",
     "noChargesYet": "Brak obciążeń w tym cyklu",
     "noCard": "Bez karty",
+    "cardNames": "Nazwy kart",
+    "noCardsSeen": "Na tym koncie nie widać jeszcze żadnej karty.",
     "currentTag": "teraz",
     "overdueDays_one": "Przeterminowane o {{count}} dzień",
     "overdueDays_few": "Przeterminowane o {{count}} dni",

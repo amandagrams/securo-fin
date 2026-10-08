@@ -152,28 +152,6 @@ class Transaction(Base):
             return None
         return str(value)
 
-    @property
-    def card_number(self) -> Optional[str]:
-        """The card that made this transaction, from the provider payload.
-
-        Pluggy's `creditCardMetadata.cardNumber` "can be different from the
-        account if it's done by an additional or virtual card". Derived at
-        read time from `raw_data` — no column, nothing to migrate. Kept as
-        text, untruncated: parsing it as a number would drop the leading
-        zero of `0597` and merge two different cards into one bucket.
-        Absent metadata, `null` or `""` all read as None.
-        """
-        raw = self.raw_data
-        if not isinstance(raw, dict):
-            return None
-        metadata = raw.get("creditCardMetadata")
-        if not isinstance(metadata, dict):
-            return None
-        number = metadata.get("cardNumber")
-        if number is None or number == "":
-            return None
-        return str(number)
-
     # Populated dynamically by the service (not DB columns).
     is_shared: bool = False
     viewer_share = cast(Optional[Decimal], None)

@@ -336,8 +336,8 @@ async def upsert_account_card(
 
     normalized = (name or "").strip() or None
     now = datetime.now(timezone.utc)
-    bind = session.get_bind()
-    insert_fn = pg_insert if bind.dialect.name == "postgresql" else sqlite_insert
+    conn = await session.connection()
+    insert_fn = pg_insert if conn.dialect.name == "postgresql" else sqlite_insert
     stmt = (
         insert_fn(AccountCard)
         .values(

@@ -192,11 +192,6 @@ class TransactionRead(TransactionBase):
     card_number: Optional[str] = None
     effective_bill_date: Optional[_Date] = None
     recurring_transaction_id: Optional[uuid.UUID] = None
-    # The card that made this transaction (additional/virtual cards differ
-    # from the account's own). Derived from raw_data.creditCardMetadata
-    # .cardNumber; text, untruncated, leading zeros preserved. Null when
-    # the provider sent no card metadata.
-    card_number: Optional[str] = None
     splits: list[TransactionSplitRead] = []
     # Shared-transaction view fields. Set per-request when the viewer
     # is a linked member of one of this transaction's splits but not

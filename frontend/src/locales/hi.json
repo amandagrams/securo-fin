@@ -1200,6 +1200,8 @@
     "minimumPayment": "न्यूनतम",
     "noChargesYet": "इस चक्र में अभी कोई शुल्क नहीं",
     "noCard": "कोई कार्ड नहीं",
+    "cardNames": "कार्ड के नाम",
+    "noCardsSeen": "इस खाते पर अभी तक कोई कार्ड नहीं देखा गया।",
     "currentTag": "अभी",
     "overdueDays": "{{count}} दिन से अतिदेय",
     "dueIn": "{{count}} दिन में देय",

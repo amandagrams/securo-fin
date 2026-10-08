@@ -14,6 +14,7 @@ import type {
   BankConnection,
   ConnectionSettings,
   Account,
+  AccountCard,
   AccountSummary,
   Collection,
   CreditCardBill,
@@ -488,6 +489,19 @@ export const accounts = {
   },
   bills: async (id: string, limit = 24): Promise<CreditCardBill[]> => {
     const { data } = await api.get(`/accounts/${id}/bills`, { params: { limit } })
+    return data
+  },
+  // Cards seen on the account's transactions, account's own card first.
+  cards: async (id: string): Promise<AccountCard[]> => {
+    const { data } = await api.get(`/accounts/${id}/cards`)
+    return data
+  },
+  // Upsert of the card's name; a blank name clears it back to null.
+  updateCard: async (id: string, cardNumber: string, name: string): Promise<AccountCard> => {
+    const { data } = await api.put(
+      `/accounts/${id}/cards/${encodeURIComponent(cardNumber)}`,
+      { name },
+    )
     return data
   },
   close: async (id: string): Promise<Account> => {

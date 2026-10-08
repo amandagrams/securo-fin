@@ -1200,6 +1200,8 @@
     "minimumPayment": "Minimum",
     "noChargesYet": "No charges yet this cycle",
     "noCard": "No card",
+    "cardNames": "Card names",
+    "noCardsSeen": "No card has been seen on this account yet.",
     "currentTag": "now",
     "overdueDays": "Overdue by {{count}} days",
     "dueIn": "Due in {{count}} days",

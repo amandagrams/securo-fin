@@ -1217,6 +1217,8 @@
     "minimumPayment": "Мінімум",
     "noChargesYet": "У цьому циклі поки немає нарахувань",
     "noCard": "Без картки",
+    "cardNames": "Назви карток",
+    "noCardsSeen": "На цьому рахунку ще не було жодної картки.",
     "currentTag": "зараз",
     "overdueDays": "Прострочено на {{count}} днів",
     "dueIn": "Залишилось {{count}} днів",

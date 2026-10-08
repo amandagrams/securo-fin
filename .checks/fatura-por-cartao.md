@@ -34,6 +34,7 @@ chave nova em `en.json` presente nos 17 locales.
 | Rotas aninhadas na conta | `GET /api/accounts/{id}/cards` → `[{card_number, name}]`; `PUT .../cards/{card_number}` `{"name"}` → `{card_number, name}`; escrita `current_writable_workspace`, leitura `current_workspace` | `PATCH /api/accounts/{id}` com mapa - mistura edição da conta com a dos cartões |
 
 | Critério 11: lançamentos além do `limit` (build) | na conta `credit_card`, a query da lista busca as páginas seguintes até `items.length === total` e concatena; contas não-cartão mantêm a busca única de hoje | subir o cap `le=500` de `GET /api/transactions` - muda o custo máximo da rota para todo consumidor e só empurra o problema até o próximo cap |
+| Gravação dos nomes no `CreditCardSettingsDialog` (build) | um input por cartão listado pelo `GET /cards`; o submit do formulário grava as configurações e depois um `PUT .../cards/{n}` por nome efetivamente alterado (strings iguais não geram chamada) | salvar a cada blur de input - um toast e uma invalidação por tecla de foco perdido, e o cancelamento do dialog deixaria metade gravada |
 
 - Nada mais aqui é difícil de reverter.
 
@@ -234,5 +235,8 @@ superfície.
   não vem com dev extras); o teste `i18n.test.ts` exige toda chave nova de `en.json` em todos os
   15 locales (padrão de inserção: ver commit, chave `accounts.noCard`); `delete_account` recusa
   contas com `connection_id` — o teste de C30 precisa de conta manual; SQLite dos testes não
-  aplica `ON DELETE CASCADE`, então C30 precisa de remoção explícita em `delete_account` além da
+  aplica   `ON DELETE CASCADE`, então C30 precisa de remoção explícita em `delete_account` além da
   cascata na migração.
+
+- **Batch 2 (S3) fechado** no commit seguinte a este handoff: C18–C34; C32 usa `TestSessionLocal`
+  para verificar após `sync_connection` (a sessão do teste ficava com MissingGreenlet).

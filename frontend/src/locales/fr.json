@@ -1204,6 +1204,8 @@
     "minimumPayment": "Minimum",
     "noChargesYet": "Aucun prélèvement pour ce cycle",
     "noCard": "Sans carte",
+    "cardNames": "Noms des cartes",
+    "noCardsSeen": "Aucune carte n'a encore été vue sur ce compte.",
     "currentTag": "actuel",
     "overdueDays": "En retard de {{count}} jours",
     "dueIn": "Échéance dans {{count}} jours",

@@ -1204,6 +1204,8 @@
     "minimumPayment": "Mínimo",
     "noChargesYet": "Nenhuma compra ainda neste ciclo",
     "noCard": "Sem cartão",
+    "cardNames": "Nomes dos cartões",
+    "noCardsSeen": "Nenhum cartão foi visto ainda nesta conta.",
     "currentTag": "agora",
     "overdueDays": "Atrasado há {{count}} dias",
     "dueIn": "Vence em {{count}} dias",

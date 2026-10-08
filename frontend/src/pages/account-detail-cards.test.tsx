@@ -1,5 +1,5 @@
 /**
- * Fatura do cartão por cartão (.checks/fatura-por-cartao.md, S1-S2).
+ * Fatura do cartão por cartão (.checks/fatura-por-cartao.md, S1-S3).
  *
  * Cada lançamento da fatura aberta mostra o cartão que o fez, a fatura se
  * parte por cartão com subtotais que somam o Total da fatura, e a quebra só
@@ -21,6 +21,8 @@ const api = vi.hoisted(() => ({
     summary: vi.fn(),
     list: vi.fn(),
     update: vi.fn(),
+    cards: vi.fn(),
+    updateCard: vi.fn(),
   },
   transactions: { list: vi.fn(), update: vi.fn(), delete: vi.fn(), create: vi.fn() },
   dashboard: { projectedTransactions: vi.fn() },
@@ -55,8 +57,10 @@ vi.mock('@/contexts/auth-context', () => ({
   useAuth: () => ({ user: { preferences: { currency_display: 'BRL' } } }),
 }))
 
+const workspace = vi.hoisted(() => ({ canWrite: true }))
+
 vi.mock('@/contexts/workspace-context', () => ({
-  useWorkspace: () => ({ canWrite: true }),
+  useWorkspace: () => ({ canWrite: workspace.canWrite }),
 }))
 
 const account = {
@@ -141,7 +145,10 @@ beforeEach(() => {
   ui.locale = 'en-US'
   ui.mobile = false
   txSeq = 0
+  workspace.canWrite = true
   api.accounts.get.mockResolvedValue(account)
+  api.accounts.cards.mockResolvedValue([])
+  api.accounts.updateCard.mockResolvedValue({ card_number: '0597', name: 'Amanda' })
   api.accounts.bills.mockResolvedValue([])
   api.accounts.list.mockResolvedValue([account])
   mockSummary()
@@ -456,5 +463,74 @@ describe('fatura por cartão', () => {
     })
     expect(headers[1]).toMatch(/25\.00/)
     expect(billTotalCard()).toMatch(/75\.00/)
+  })
+})
+
+describe('nome do cartão', () => {
+  async function openCcSettings(user: ReturnType<typeof renderWithProviders>['user']) {
+    await user.click(await screen.findByTitle('Edit'))
+    await screen.findByRole('dialog')
+  }
+
+  it('shows the card name in the group title but not on the rows', async () => {
+    api.accounts.cards.mockResolvedValue([
+      { card_number: '1234', name: null },
+      { card_number: '0597', name: 'Amanda' },
+    ])
+    api.transactions.list.mockResolvedValue({ items: criterion6Bill(), total: 6 })
+    await renderPage()
+
+    await screen.findByText('MERCADO TITULAR')
+    const headers = groupHeaders()
+    expect(headers[1]).toContain('Amanda')
+    expect(headers[1]).toContain('•••• 0597')
+    expect(screen.getByText('RESTAURANTE DEP').closest('tr')?.textContent).toContain('•••• 0597')
+    expect(screen.getByText('RESTAURANTE DEP').closest('tr')?.textContent).not.toContain('Amanda')
+  })
+
+  it('falls back to the mask when the card has no name', async () => {
+    api.accounts.cards.mockResolvedValue([
+      { card_number: '1234', name: null },
+      { card_number: '0597', name: null },
+    ])
+    api.transactions.list.mockResolvedValue({ items: criterion6Bill(), total: 6 })
+    await renderPage()
+
+    await screen.findByText('MERCADO TITULAR')
+    const headers = groupHeaders()
+    expect(headers[1]).toContain('•••• 0597')
+    expect(headers[1]).not.toContain('Amanda')
+  })
+
+  it('hides the name fields without write permission', async () => {
+    workspace.canWrite = false
+    api.accounts.cards.mockResolvedValue([{ card_number: '0597', name: 'Amanda' }])
+    await renderPage()
+
+    await screen.findByText('Transactions')
+    expect(screen.queryByTestId('card-name-input')).toBeNull()
+    expect(screen.queryByTitle('Edit')).toBeNull()
+  })
+
+  it('shows no name fields while the card list loads', async () => {
+    let resolveCards!: (value: { card_number: string; name: string | null }[]) => void
+    api.accounts.cards.mockImplementation(
+      () => new Promise((resolve) => { resolveCards = resolve }),
+    )
+    const { user } = await renderPage()
+    await openCcSettings(user)
+
+    expect(screen.queryByTestId('card-name-input')).toBeNull()
+    resolveCards([{ card_number: '0597', name: null }])
+    await waitFor(() => expect(screen.getByTestId('card-name-input')).toBeTruthy())
+  })
+
+  it('says no card was seen yet when the account has none', async () => {
+    api.accounts.cards.mockResolvedValue([])
+    const { user } = await renderPage()
+    await openCcSettings(user)
+
+    await screen.findByText('No card has been seen on this account yet.')
+    expect(screen.queryByTestId('card-name-input')).toBeNull()
   })
 })
