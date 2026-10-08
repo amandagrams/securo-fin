@@ -4,6 +4,7 @@ As asserções vêm dos critérios: débitos em bill_purchases, créditos que
 entram na fatura em bill_refunds, diferença igual a projected_expenses,
 null fora de credit_card, e _primary pela mesma conversão dos outros.
 """
+
 import uuid
 from datetime import timedelta
 from decimal import Decimal
@@ -21,7 +22,11 @@ from app.models.transaction import Transaction
 
 
 async def _account(
-    session: AsyncSession, user_id: uuid.UUID, *, acc_type: str, currency: str,
+    session: AsyncSession,
+    user_id: uuid.UUID,
+    *,
+    acc_type: str,
+    currency: str,
 ) -> Account:
     account = Account(
         id=uuid.uuid4(),
@@ -38,7 +43,10 @@ async def _account(
 
 
 async def _bill(
-    session: AsyncSession, user_id: uuid.UUID, account_id: uuid.UUID, due,
+    session: AsyncSession,
+    user_id: uuid.UUID,
+    account_id: uuid.UUID,
+    due,
 ) -> CreditCardBill:
     bill = CreditCardBill(
         user_id=user_id,
@@ -69,28 +77,33 @@ async def _txn(
     transfer_pair_id: uuid.UUID | None = None,
     category_id: uuid.UUID | None = None,
 ) -> None:
-    session.add(Transaction(
-        id=uuid.uuid4(),
-        user_id=user_id,
-        account_id=account_id,
-        description=f"{txn_type} {amount} {status}",
-        amount=Decimal(amount),
-        currency=currency,
-        date=txn_date,
-        type=txn_type,
-        source="manual",
-        status=status,
-        bill_id=bill_id,
-        is_ignored=is_ignored,
-        transfer_pair_id=transfer_pair_id,
-        category_id=category_id,
-    ))
+    session.add(
+        Transaction(
+            id=uuid.uuid4(),
+            user_id=user_id,
+            account_id=account_id,
+            description=f"{txn_type} {amount} {status}",
+            amount=Decimal(amount),
+            currency=currency,
+            date=txn_date,
+            type=txn_type,
+            source="manual",
+            status=status,
+            bill_id=bill_id,
+            is_ignored=is_ignored,
+            transfer_pair_id=transfer_pair_id,
+            category_id=category_id,
+        )
+    )
     await session.commit()
 
 
 @pytest.mark.asyncio
 async def test_bill_purchases_and_refunds_for_selected_bill(
-    client: AsyncClient, auth_headers, session: AsyncSession, test_user,
+    client: AsyncClient,
+    auth_headers,
+    session: AsyncSession,
+    test_user,
 ):
     today = app_today()
     account = await _account(session, test_user.id, acc_type="credit_card", currency="BRL")
@@ -108,39 +121,97 @@ async def test_bill_purchases_and_refunds_for_selected_bill(
     on_bill = today - timedelta(days=5)
     window_from = today - timedelta(days=20)
     window_to = today - timedelta(days=1)
-    await _txn(session, test_user.id, account.id, "100.00", "debit", on_bill, currency="BRL", bill_id=bill.id)
     await _txn(
-        session, test_user.id, account.id, "50.00", "debit", on_bill,
-        currency="BRL", status="pending", bill_id=bill.id,
-    )
-    await _txn(session, test_user.id, account.id, "30.00", "credit", on_bill, currency="BRL", bill_id=bill.id)
-    await _txn(
-        session, test_user.id, account.id, "25.00", "debit", on_bill,
-        currency="BRL", bill_id=bill.id, is_ignored=True,
-    )
-    await _txn(
-        session, test_user.id, account.id, "80.00", "credit", on_bill,
-        currency="BRL", bill_id=bill.id, transfer_pair_id=uuid.uuid4(),
+        session,
+        test_user.id,
+        account.id,
+        "100.00",
+        "debit",
+        on_bill,
+        currency="BRL",
+        bill_id=bill.id,
     )
     await _txn(
-        session, test_user.id, account.id, "40.00", "credit", on_bill,
-        currency="BRL", bill_id=bill.id, category_id=transfer_cat.id,
+        session,
+        test_user.id,
+        account.id,
+        "50.00",
+        "debit",
+        on_bill,
+        currency="BRL",
+        status="pending",
+        bill_id=bill.id,
     )
     await _txn(
-        session, test_user.id, account.id, "999.00", "debit", on_bill,
-        currency="BRL", bill_id=other.id,
+        session,
+        test_user.id,
+        account.id,
+        "30.00",
+        "credit",
+        on_bill,
+        currency="BRL",
+        bill_id=bill.id,
+    )
+    await _txn(
+        session,
+        test_user.id,
+        account.id,
+        "25.00",
+        "debit",
+        on_bill,
+        currency="BRL",
+        bill_id=bill.id,
+        is_ignored=True,
+    )
+    await _txn(
+        session,
+        test_user.id,
+        account.id,
+        "80.00",
+        "credit",
+        on_bill,
+        currency="BRL",
+        bill_id=bill.id,
+        transfer_pair_id=uuid.uuid4(),
+    )
+    await _txn(
+        session,
+        test_user.id,
+        account.id,
+        "40.00",
+        "credit",
+        on_bill,
+        currency="BRL",
+        bill_id=bill.id,
+        category_id=transfer_cat.id,
+    )
+    await _txn(
+        session,
+        test_user.id,
+        account.id,
+        "999.00",
+        "debit",
+        on_bill,
+        currency="BRL",
+        bill_id=other.id,
     )
 
     selected = await client.get(
         f"/api/accounts/{account.id}/summary",
         headers=auth_headers,
-        params={"bill_id": str(bill.id), "from": window_from.isoformat(), "to": window_to.isoformat()},
+        params={
+            "bill_id": str(bill.id),
+            "from": window_from.isoformat(),
+            "to": window_to.isoformat(),
+        },
     )
     assert selected.status_code == 200
     body = selected.json()
     assert body["bill_purchases"] == pytest.approx(150.00)
     assert body["bill_refunds"] == pytest.approx(30.00)
-    assert body["bill_purchases"] - body["bill_refunds"] == pytest.approx(body["projected_expenses"])
+    assert body["bill_purchases"] - body["bill_refunds"] == pytest.approx(
+        body["projected_expenses"]
+    )
     assert body["projected_expenses"] == pytest.approx(120.00)
 
     # Posted + pending + a future row with no bill, and one already billed
@@ -149,16 +220,33 @@ async def test_bill_purchases_and_refunds_for_selected_bill(
     open_to = today + timedelta(days=15)
     await _txn(session, test_user.id, account.id, "40.00", "debit", today, currency="BRL")
     await _txn(
-        session, test_user.id, account.id, "10.00", "debit", today,
-        currency="BRL", status="pending",
+        session,
+        test_user.id,
+        account.id,
+        "10.00",
+        "debit",
+        today,
+        currency="BRL",
+        status="pending",
     )
     await _txn(
-        session, test_user.id, account.id, "7.00", "debit", today + timedelta(days=5),
+        session,
+        test_user.id,
+        account.id,
+        "7.00",
+        "debit",
+        today + timedelta(days=5),
         currency="BRL",
     )
     await _txn(
-        session, test_user.id, account.id, "999.00", "debit", today,
-        currency="BRL", bill_id=bill.id,
+        session,
+        test_user.id,
+        account.id,
+        "999.00",
+        "debit",
+        today,
+        currency="BRL",
+        bill_id=bill.id,
     )
 
     unbilled = await client.get(
@@ -170,13 +258,18 @@ async def test_bill_purchases_and_refunds_for_selected_bill(
     open_body = unbilled.json()
     assert open_body["bill_purchases"] == pytest.approx(57.00)
     assert open_body["bill_refunds"] == pytest.approx(0.00)
-    assert open_body["bill_purchases"] - open_body["bill_refunds"] == pytest.approx(open_body["projected_expenses"])
+    assert open_body["bill_purchases"] - open_body["bill_refunds"] == pytest.approx(
+        open_body["projected_expenses"]
+    )
     assert open_body["projected_expenses"] == pytest.approx(57.00)
 
 
 @pytest.mark.asyncio
 async def test_bill_composition_null_for_non_credit_card(
-    client: AsyncClient, auth_headers, session: AsyncSession, test_user,
+    client: AsyncClient,
+    auth_headers,
+    session: AsyncSession,
+    test_user,
 ):
     today = app_today()
     account = await _account(session, test_user.id, acc_type="checking", currency="USD")
@@ -194,16 +287,21 @@ async def test_bill_composition_null_for_non_credit_card(
 
 @pytest.mark.asyncio
 async def test_bill_composition_primary_converted_like_other_primary(
-    client: AsyncClient, auth_headers, session: AsyncSession, test_user,
+    client: AsyncClient,
+    auth_headers,
+    session: AsyncSession,
+    test_user,
 ):
     today = app_today()
-    session.add(FxRate(
-        base_currency="USD",
-        quote_currency="BRL",
-        date=today,
-        rate=Decimal("5"),
-        source="test",
-    ))
+    session.add(
+        FxRate(
+            base_currency="USD",
+            quote_currency="BRL",
+            date=today,
+            rate=Decimal("5"),
+            source="test",
+        )
+    )
     await session.commit()
 
     account = await _account(session, test_user.id, acc_type="credit_card", currency="USD")

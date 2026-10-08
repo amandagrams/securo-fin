@@ -145,6 +145,7 @@ async function renderPage() {
     path: '/accounts/:id',
   })
   await waitFor(() => expect(api.transactions.list).toHaveBeenCalled())
+  await screen.findByRole('heading', { name: 'Card' })
   return rendered
 }
 

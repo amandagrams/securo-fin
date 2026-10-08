@@ -185,8 +185,9 @@ fica abaixo de 150k. A fronteira de troca de superfície (backend → página) n
 então C1–C13 fecham juntos.
 
 - **Onde caiu a fronteira**: não houve corte. C1–C13 fecham no commit `04225fd`
-  (o checklist em si é `7f97e85`, anterior ao código). Proofs ainda não rodaram
-  neste parágrafo — o resultado entra no relatório quando saírem.
+  (o checklist em si é `7f97e85`, anterior ao código). Os 13 proofs e a paridade
+  i18n saíram com exit 0. O teste de UI espera o heading da conta antes de
+  afirmar, para não ler o skeleton de carregamento.
 - **O que o usuário decidiu no meio do build**: nada — nenhuma clarificação. As
   três portas novas (módulo único, estado só onde há copy, inglês `closed {date}`)
   ganharam linha em Landing antes do código e não contradizem o que já estava

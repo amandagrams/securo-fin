@@ -49,6 +49,8 @@ export type BillCycleStatusVariant = 'open' | 'closed-due' | 'closed-was-due'
 /** Open only on the in-progress cycle window; closed only when a bill anchors
  * it. A hand-edited range and a card with no close day get nothing — there is
  * no copy for a past cycle-math window that no bill anchors. */
+// Not a component: the page calls this to decide whether to render one.
+// eslint-disable-next-line react-refresh/only-export-components
 export function resolveBillCycleStatus(input: {
   statementCloseDay: number | null | undefined
   isInProgressCycle: boolean
