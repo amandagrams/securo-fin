@@ -918,6 +918,14 @@
     "deleted": "取引を削除しました",
     "confirmDelete": "この取引を削除してもよろしいですか?",
     "makeRecurring": "定期取引にする",
+    "makeRecurringOptions": {
+      "monthly": "毎月",
+      "quarterly": "四半期ごと",
+      "semiannual": "半年ごと",
+      "weekly": "毎週",
+      "biweekly": "2週間ごと",
+      "yearly": "毎年"
+    },
     "makeInstallment": "分割払いとして繰り返す",
     "installmentCount": "分割回数",
     "installmentFrequency": "頻度",

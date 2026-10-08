@@ -918,6 +918,14 @@
     "deleted": "Transactie verwijderd",
     "confirmDelete": "Weet u zeker dat u deze transactie wilt verwijderen?",
     "makeRecurring": "Maak terugkerend",
+    "makeRecurringOptions": {
+      "monthly": "Maandelijks",
+      "quarterly": "Driemaandelijks",
+      "semiannual": "Elke 6 maanden",
+      "weekly": "Wekelijks",
+      "biweekly": "Elke 2 weken",
+      "yearly": "Jaarlijks"
+    },
     "makeInstallment": "Herhaal als termijnen",
     "installmentCount": "Aantal termijnen",
     "installmentFrequency": "Frequentie",

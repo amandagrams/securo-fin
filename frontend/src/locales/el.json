@@ -1105,6 +1105,14 @@
     "deleted": "Η συναλλαγή διαγράφηκε",
     "confirmDelete": "Είστε βέβαιοι ότι θέλετε να διαγράψετε αυτήν τη συναλλαγή;",
     "makeRecurring": "Ορισμός ως επαναλαμβανόμενη",
+    "makeRecurringOptions": {
+      "monthly": "Μηνιαία",
+      "quarterly": "Τριμηνιαία",
+      "semiannual": "Κάθε 6 μήνες",
+      "weekly": "Εβδομαδιαία",
+      "biweekly": "Κάθε 2 εβδομάδες",
+      "yearly": "Ετήσια"
+    },
     "makeInstallment": "Επανάληψη ως δόσεις",
     "installmentCount": "Αριθμός δόσεων",
     "installmentFrequency": "Συχνότητα",

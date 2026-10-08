@@ -8,6 +8,7 @@ from sqlalchemy import CursorResult, delete, select, func, or_, not_, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
+from app.models.recurring_transaction import RecurringTransaction
 from app.models.transaction import Transaction
 from app.models.transaction_attachment import TransactionAttachment
 from app.models.account import Account
@@ -17,6 +18,7 @@ from app.models.group import Group, GroupMember
 from app.models.payee import Payee
 from app.schemas.transaction import (
     InstallmentSeriesCreate,
+    MakeTransactionRecurring,
     TransactionCreate,
     TransactionUpdate,
     TransferCreate,
@@ -26,6 +28,7 @@ from app.services import reconciliation_service, split_service
 from app.services.credit_card_service import apply_effective_date
 from app.services.rule_service import apply_rules_to_transaction
 from app.services.fx_rate_service import stamp_primary_amount, convert as fx_convert
+from app.services.recurring_transaction_service import _advance_date
 from app.services._query_filters import (
     counts_as_pnl,
     counts_as_user_pnl,
@@ -1867,6 +1870,68 @@ async def unlink_recurring_transaction(
         return None
     transaction.recurring_transaction_id = None
     await session.commit()
+    await session.refresh(transaction)
+    return transaction
+
+
+async def make_transaction_recurring(
+    session: AsyncSession,
+    transaction_id: uuid.UUID,
+    workspace_id: uuid.UUID,
+    user_id: uuid.UUID,
+    data: MakeTransactionRecurring,
+) -> Optional[Transaction]:
+    """Turn an existing transaction into the first occurrence of a recurring bill.
+
+    The rule and the foreign key are written in one commit. If the link cannot
+    be saved, the recurring row from this attempt is rolled back with it.
+    ``next_occurrence`` is the following period (``_advance_date``), so the
+    charge that already exists is not projected again and short months keep
+    the day-31 clamp the recurring screen already uses.
+    """
+    transaction = await get_transaction(session, transaction_id, workspace_id)
+    if transaction is None:
+        return None
+    if transaction.recurring_transaction_id is not None:
+        raise ValueError("Transaction is already linked to a recurring bill")
+    if transaction.transfer_pair_id is not None:
+        raise ValueError("A transfer cannot be marked recurring")
+    if transaction.installment_number is not None or transaction.installment_series_id is not None:
+        raise ValueError("An installment cannot be marked recurring")
+
+    intended_day = data.day_of_month if data.day_of_month is not None else transaction.date.day
+    next_occurrence = _advance_date(
+        transaction.date, data.frequency, intended_day=intended_day,
+    )
+    recurring = RecurringTransaction(
+        user_id=user_id,
+        workspace_id=workspace_id,
+        account_id=transaction.account_id,
+        category_id=transaction.category_id,
+        description=transaction.description,
+        amount=transaction.amount,
+        currency=transaction.currency,
+        type=transaction.type,
+        frequency=data.frequency,
+        weekend_adjustment="none",
+        day_of_month=data.day_of_month,
+        start_date=transaction.date,
+        end_date=data.end_date,
+        is_active=True,
+        auto_generate=True,
+        next_occurrence=next_occurrence,
+    )
+    session.add(recurring)
+    try:
+        await session.flush()
+        transaction.recurring_transaction_id = recurring.id
+        await stamp_primary_amount(
+            session, user_id, recurring, date_field="start_date",
+        )
+        await session.commit()
+    except Exception:
+        await session.rollback()
+        raise
     await session.refresh(transaction)
     return transaction
 

@@ -45,7 +45,8 @@ import { PageHeader } from '@/components/page-header'
 import { CategoryIcon } from '@/components/category-icon'
 import { AccountIcon } from '@/components/account-icon'
 import { TransactionDrillDown, type DrillDownFilter } from '@/components/transaction-drill-down'
-import { TransactionDialog, type TransactionSavePayload } from '@/components/transaction-dialog'
+import { TransactionDialog, type RecurringSaveInput, type TransactionSavePayload } from '@/components/transaction-dialog'
+import { saveEditedTransaction } from '@/hooks/use-create-transaction'
 import { extractApiError } from '@/lib/api-errors'
 import { TransactionCalendarView } from '@/components/transaction-calendar-view'
 import { TransactionsViewSwitcher, type TransactionsViewMode } from '@/components/transactions-view-switcher'
@@ -278,8 +279,12 @@ export default function DashboardPage() {
   })
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, ...data }: TransactionSavePayload & { id: string }) =>
-      transactions.update(id, data),
+    mutationFn: ({
+      id,
+      recurringData,
+      ...data
+    }: TransactionSavePayload & { id: string; recurringData?: RecurringSaveInput }) =>
+      saveEditedTransaction(id, data, recurringData),
     onSuccess: () => {
       invalidateFinancialQueries(queryClient)
       setDialogOpen(false)
@@ -1576,8 +1581,8 @@ export default function DashboardPage() {
         categories={categoriesList ?? []}
         categoryGroups={categoryGroupsList ?? []}
         accounts={(accountsList ?? []).map((a: { id: string; name: string; display_name?: string | null }) => ({ id: a.id, name: getAccountName(a) }))}
-        onSave={(data) => {
-          if (editingTx) updateMutation.mutate({ id: editingTx.id, ...data })
+        onSave={(data, recurringData) => {
+          if (editingTx) updateMutation.mutate({ id: editingTx.id, ...data, recurringData })
         }}
         onDelete={() => {
           if (editingTx) deleteMutation.mutate(editingTx.id)
