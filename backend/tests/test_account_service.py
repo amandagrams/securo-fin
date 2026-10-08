@@ -163,7 +163,14 @@ async def test_create_account_with_negative_balance(session: AsyncSession, test_
 @pytest.mark.asyncio
 async def test_create_credit_card_account_opening_is_debit(session: AsyncSession, test_user, test_workspace):
     """Credit card opening balance is recorded as debit (represents debt)."""
-    data = AccountCreate(name="Nubank", type="credit_card", balance=Decimal("500.00"), currency="BRL")
+    checking = await create_account(
+        session, test_workspace.id, test_user.id,
+        AccountCreate(name="Conta", type="checking", balance=Decimal("0.00"), currency="BRL"),
+    )
+    data = AccountCreate(
+        name="Nubank", type="credit_card", balance=Decimal("500.00"), currency="BRL",
+        payment_account_id=checking.id,
+    )
     account = await create_account(session, test_workspace.id, test_user.id, data)
 
     from sqlalchemy import select

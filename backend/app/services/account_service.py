@@ -29,6 +29,43 @@ def get_account_name(account: Account) -> str:
     return account.display_name or account.name
 
 
+class AccountWriteError(Exception):
+    """A create/update the route maps to 422 or 404 before any row is written."""
+
+    def __init__(self, status_code: int, detail: str):
+        self.status_code = status_code
+        self.detail = detail
+        super().__init__(detail)
+
+
+async def _require_payment_account(
+    session: AsyncSession,
+    workspace_id: uuid.UUID,
+    payment_account_id: uuid.UUID | None,
+    *,
+    required: bool,
+) -> None:
+    """Reject a card's payment account that is not an open checking account here.
+
+    Missing is 422 when the field is required (creating a card). A target that
+    is not in this workspace, including one that does not exist, is 404. A
+    target that is here but is the wrong type or closed is 422.
+    """
+    if payment_account_id is None:
+        if required:
+            raise AccountWriteError(
+                422, "A credit card needs the checking account that pays the bill"
+            )
+        return
+    target = await session.get(Account, payment_account_id)
+    if target is None or target.workspace_id != workspace_id:
+        raise AccountWriteError(404, "Payment account not found")
+    if target.type != "checking" or target.is_closed:
+        raise AccountWriteError(
+            422, "Payment account must be an open checking account in this workspace"
+        )
+
+
 def _simplefin_to_internal_balance(provider: str, account_type: str, balance: Decimal) -> Decimal:
     """Normalize a SimpleFIN balance to Securo's positive-for-debt convention.
 
@@ -189,6 +226,7 @@ def serialize_account(
         "credit_limit": float(acc.credit_limit) if acc.credit_limit is not None else None,
         "statement_close_day": acc.statement_close_day,
         "payment_due_day": acc.payment_due_day,
+        "payment_account_id": acc.payment_account_id,
         "minimum_payment": float(acc.minimum_payment) if acc.minimum_payment is not None else None,
         "card_brand": acc.card_brand,
         "card_level": acc.card_level,
@@ -383,6 +421,14 @@ async def create_account(
     data: AccountCreate,
 ) -> Account:
     is_cc = data.type == "credit_card"
+    if is_cc:
+        await _require_payment_account(
+            session, workspace_id, data.payment_account_id, required=True
+        )
+    elif data.payment_account_id is not None:
+        raise AccountWriteError(
+            422, "Only a credit card can set the account that pays the bill"
+        )
     account = Account(
         user_id=user_id,
         workspace_id=workspace_id,
@@ -396,6 +442,7 @@ async def create_account(
         minimum_payment=data.minimum_payment if is_cc else None,
         card_brand=data.card_brand if is_cc else None,
         card_level=data.card_level if is_cc else None,
+        payment_account_id=data.payment_account_id if is_cc else None,
     )
     session.add(account)
     await session.flush()  # get account.id without committing
@@ -431,6 +478,17 @@ async def update_account(
     update_data = data.model_dump(exclude_unset=True)
     balance_date = update_data.pop("balance_date", None)
 
+    if "payment_account_id" in update_data:
+        resulting_type = update_data.get("type", account.type)
+        value = update_data["payment_account_id"]
+        if resulting_type != "credit_card":
+            if value is not None:
+                raise AccountWriteError(
+                    422, "Only a credit card can set the account that pays the bill"
+                )
+        else:
+            await _require_payment_account(session, workspace_id, value, required=False)
+
     # Track whether we need to recompute effective_date for all transactions.
     # Changes to the CC cycle days shift which bill each historical purchase
     # belongs to, so stored effective_dates need to be rebuilt.
@@ -455,6 +513,7 @@ async def update_account(
             "minimum_payment",
             "card_brand",
             "card_level",
+            "payment_account_id",
         }
         disallowed = set(update_data.keys()) - editable_fields
         if disallowed:
@@ -492,6 +551,7 @@ async def update_account(
             account.minimum_payment = None
             account.card_brand = None
             account.card_level = None
+            account.payment_account_id = None
         if cycle_fields_changed:
             await _recompute_effective_dates(session, account)
         await session.commit()
@@ -508,6 +568,7 @@ async def update_account(
         account.minimum_payment = None
         account.card_brand = None
         account.card_level = None
+        account.payment_account_id = None
 
     # When balance changes, sync the opening_balance transaction
     if "balance" in update_data:
@@ -749,6 +810,13 @@ async def delete_account(session: AsyncSession, account_id: uuid.UUID, workspace
     from app.models.account_card import AccountCard
     await session.execute(
         delete(AccountCard).where(AccountCard.account_id == account_id)
+    )
+    # The migration's ON DELETE SET NULL does this in PostgreSQL. SQLite tests
+    # do not enforce that foreign key, so the pointer is cleared here too.
+    await session.execute(
+        update(Account)
+        .where(Account.payment_account_id == account_id)
+        .values(payment_account_id=None)
     )
 
     await session.delete(account)
