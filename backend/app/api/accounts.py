@@ -78,6 +78,15 @@ async def get_account_summary(
         summary["monthly_expenses_primary"] = float(exp)
         summary["projected_income_primary"] = float(projected_inc)
         summary["projected_expenses_primary"] = float(projected_exp)
+        if summary.get("bill_purchases") is not None and summary.get("bill_refunds") is not None:
+            bill_purchases, _ = await convert(
+                session, Decimal(str(summary["bill_purchases"])), account.currency, primary_currency,
+            )
+            bill_refunds, _ = await convert(
+                session, Decimal(str(summary["bill_refunds"])), account.currency, primary_currency,
+            )
+            summary["bill_purchases_primary"] = float(bill_purchases)
+            summary["bill_refunds_primary"] = float(bill_refunds)
 
     return summary
 
