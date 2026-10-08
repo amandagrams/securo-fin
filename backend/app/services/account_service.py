@@ -1024,6 +1024,34 @@ async def get_account_summary(
         )
     forecast_expenses = float(forecast_expense_result.scalar() or 0)
 
+    # Same rows as projected_expenses, split into the two sides the bill
+    # total nets. Debits are purchases; credits that survive counts_on_bill
+    # are refunds. Outside a credit card there is no bill to compose.
+    if account.type == "credit_card":
+        on_projected_bill = or_(
+            _and(Transaction.status == "posted", bucket_date <= today),
+            Transaction.status == "pending",
+            bucket_date > today,
+        )
+
+        async def _bill_side(txn_type: str) -> float:
+            result = await session.execute(
+                _scope(select(func.coalesce(func.sum(func.abs(effective_amount)), 0)).where(
+                    Transaction.account_id == account_id,
+                    Transaction.type == txn_type,
+                    Transaction.source != "opening_balance",
+                    on_projected_bill,
+                    summary_filter,
+                ))
+            )
+            return float(result.scalar() or 0)
+
+        bill_purchases = await _bill_side("debit")
+        bill_refunds = await _bill_side("credit")
+    else:
+        bill_purchases = None
+        bill_refunds = None
+
     # Opening balance: the projected balance at (date_from - 1 day). It seeds
     # the account-detail running-balance walk, so it includes pending rows and
     # future-dated rows that occur before the visible window. The opening row
@@ -1116,6 +1144,8 @@ async def get_account_summary(
         "monthly_expenses": monthly_expenses,
         "projected_income": monthly_income + forecast_income,
         "projected_expenses": monthly_expenses + forecast_expenses,
+        "bill_purchases": bill_purchases,
+        "bill_refunds": bill_refunds,
     }
 
 
