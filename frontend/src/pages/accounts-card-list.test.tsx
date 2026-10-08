@@ -118,15 +118,6 @@ function bills(total: number | null): UpcomingBills {
   }
 }
 
-function usedPct(limit: number, available: number) {
-  return ((limit - available) / limit) * 100
-}
-
-function barWidth(limit: number, available: number) {
-  const pct = usedPct(limit, available)
-  return `${Math.min(100, Math.max(0, pct))}%`
-}
-
 function compact(value: string | null | undefined) {
   return (value ?? '').replace(/\s/g, '')
 }
@@ -205,11 +196,10 @@ describe('cartão na lista de contas', () => {
     expect(amounts?.textContent).toBe(limitLine(20871.48, limit))
     expect(compact(amounts?.textContent)).toBe(compact('R$ 20.871,48 de R$ 50.000,00'))
 
-    const pct = usedPct(limit, available)
     const fill = barFill(link)
-    expect(fill.style.width).toBe(barWidth(limit, available))
+    expect(fill.style.width).toBe(`${Math.min(100, Math.max(0, ((50000 - 29128.52) / 50000) * 100))}%`)
     expect(fill.classList.contains('bg-blue-500')).toBe(true)
-    expect(fill.classList.contains(utilizationColor(pct))).toBe(true)
+    expect(utilizationColor(((50000 - 29128.52) / 50000) * 100)).toBe('bg-blue-500')
   })
 
   it('labels the used limit bar in English', async () => {
@@ -229,32 +219,66 @@ describe('cartão na lista de contas', () => {
   })
 
   it('colors the used limit bar with the account page bands', async () => {
-    const bands = [
-      { name: 'Band 20', limit: 100, available: 80, color: 'bg-emerald-500' },
-      { name: 'Band 29.99', limit: 10000, available: 7001, color: 'bg-emerald-500' },
-      { name: 'Band 30', limit: 100, available: 70, color: 'bg-blue-500' },
-      { name: 'Band 69.99', limit: 10000, available: 3001, color: 'bg-blue-500' },
-      { name: 'Band 70', limit: 100, available: 30, color: 'bg-amber-400' },
-      { name: 'Band 89.99', limit: 10000, available: 1001, color: 'bg-amber-400' },
-      { name: 'Band 90', limit: 100, available: 10, color: 'bg-rose-500' },
-      { name: 'Band 100', limit: 100, available: 0, color: 'bg-rose-500' },
-    ]
-    renderList(bands.map((band, index) => account({
-      id: `band-${index}`,
-      name: band.name,
-      type: 'credit_card',
-      credit_limit: band.limit,
-      available_credit: band.available,
-    })))
+    renderList([
+      account({ id: 'band-20', name: 'Band 20', type: 'credit_card', credit_limit: 100, available_credit: 80 }),
+      account({ id: 'band-2999', name: 'Band 29.99', type: 'credit_card', credit_limit: 10000, available_credit: 7001 }),
+      account({ id: 'band-30', name: 'Band 30', type: 'credit_card', credit_limit: 100, available_credit: 70 }),
+      account({ id: 'band-6999', name: 'Band 69.99', type: 'credit_card', credit_limit: 10000, available_credit: 3001 }),
+      account({ id: 'band-70', name: 'Band 70', type: 'credit_card', credit_limit: 100, available_credit: 30 }),
+      account({ id: 'band-8999', name: 'Band 89.99', type: 'credit_card', credit_limit: 10000, available_credit: 1001 }),
+      account({ id: 'band-90', name: 'Band 90', type: 'credit_card', credit_limit: 100, available_credit: 10 }),
+      account({ id: 'band-100', name: 'Band 100', type: 'credit_card', credit_limit: 100, available_credit: 0 }),
+    ])
 
     expect(await screen.findByRole('link', { name: /Band 20/ })).toBeTruthy()
-    for (const band of bands) {
-      const pct = usedPct(band.limit, band.available)
-      const fill = barFill(linkOf(new RegExp(band.name)))
-      expect(utilizationColor(pct)).toBe(band.color)
-      expect(fill.classList.contains(band.color)).toBe(true)
-      expect(fill.style.width).toBe(`${Math.min(100, Math.max(0, pct))}%`)
-    }
+
+    const fill20 = barFill(linkOf(/Band 20/))
+    expect(((100 - 80) / 100) * 100).toBe(20)
+    expect(fill20.classList.contains('bg-emerald-500')).toBe(true)
+    expect(utilizationColor(20)).toBe('bg-emerald-500')
+    expect(fill20.style.width).toBe('20%')
+
+    const fill2999 = barFill(linkOf(/Band 29\.99/))
+    expect(((10000 - 7001) / 10000) * 100).toBeCloseTo(29.99)
+    expect(fill2999.classList.contains('bg-emerald-500')).toBe(true)
+    expect(utilizationColor(((10000 - 7001) / 10000) * 100)).toBe('bg-emerald-500')
+    expect(fill2999.style.width).toBe(`${Math.min(100, Math.max(0, ((10000 - 7001) / 10000) * 100))}%`)
+
+    const fill30 = barFill(linkOf(/Band 30/))
+    expect(((100 - 70) / 100) * 100).toBe(30)
+    expect(fill30.classList.contains('bg-blue-500')).toBe(true)
+    expect(utilizationColor(30)).toBe('bg-blue-500')
+    expect(fill30.style.width).toBe('30%')
+
+    const fill6999 = barFill(linkOf(/Band 69\.99/))
+    expect(((10000 - 3001) / 10000) * 100).toBeCloseTo(69.99)
+    expect(fill6999.classList.contains('bg-blue-500')).toBe(true)
+    expect(utilizationColor(((10000 - 3001) / 10000) * 100)).toBe('bg-blue-500')
+    expect(fill6999.style.width).toBe(`${Math.min(100, Math.max(0, ((10000 - 3001) / 10000) * 100))}%`)
+
+    const fill70 = barFill(linkOf(/Band 70/))
+    expect(((100 - 30) / 100) * 100).toBe(70)
+    expect(fill70.classList.contains('bg-amber-400')).toBe(true)
+    expect(utilizationColor(70)).toBe('bg-amber-400')
+    expect(fill70.style.width).toBe('70%')
+
+    const fill8999 = barFill(linkOf(/Band 89\.99/))
+    expect(((10000 - 1001) / 10000) * 100).toBeCloseTo(89.99)
+    expect(fill8999.classList.contains('bg-amber-400')).toBe(true)
+    expect(utilizationColor(((10000 - 1001) / 10000) * 100)).toBe('bg-amber-400')
+    expect(fill8999.style.width).toBe(`${Math.min(100, Math.max(0, ((10000 - 1001) / 10000) * 100))}%`)
+
+    const fill90 = barFill(linkOf(/Band 90/))
+    expect(((100 - 10) / 100) * 100).toBe(90)
+    expect(fill90.classList.contains('bg-rose-500')).toBe(true)
+    expect(utilizationColor(90)).toBe('bg-rose-500')
+    expect(fill90.style.width).toBe('90%')
+
+    const fill100 = barFill(linkOf(/Band 100/))
+    expect(((100 - 0) / 100) * 100).toBe(100)
+    expect(fill100.classList.contains('bg-rose-500')).toBe(true)
+    expect(utilizationColor(100)).toBe('bg-rose-500')
+    expect(fill100.style.width).toBe('100%')
   })
 
   it('hides the used limit bar when limit or available credit is missing', async () => {
