@@ -85,6 +85,7 @@ export function TransactionCalendarView({
   accounts?: Account[]
   userCurrency: string
 }) {
+  const { t } = useTranslation()
   const [density, setDensity] = useState<CalendarDensity>(readCalendarDensity)
   const [metric, setMetric] = useState<CalendarMetric>(readCalendarMetric)
   // The server decides which rows are actual and which are projected by its
@@ -142,7 +143,18 @@ export function TransactionCalendarView({
     <div className="mb-4 flex flex-col gap-4 md:flex-row md:items-start">
       <section className="min-w-0 flex-1 bg-card rounded-xl border border-border shadow-sm overflow-hidden">
         <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-3 border-b border-border sm:px-5">
-          <CalendarLegend />
+          <div className="flex flex-wrap items-center gap-4">
+            <p data-testid="actual-balance" className="text-sm">
+              <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                {t('transactions.calendarActualBalance')}
+              </span>
+              {' '}
+              <span className="font-bold tabular-nums text-foreground">
+                {mask(formatCurrency(calendar.actual_balance ?? 0, calendar.currency, locale))}
+              </span>
+            </p>
+            <CalendarLegend />
+          </div>
           <div className="flex flex-wrap items-center gap-2">
             <CalendarMetricToggle value={metric} onChange={setMetric} />
             <CalendarDensityToggle value={density} onChange={setDensity} />
@@ -189,6 +201,7 @@ export function TransactionCalendarView({
               mask={mask}
               density={density}
               metric={metric}
+              showProjectedBalance={day.date >= today}
               onSelect={() => onSelectedDateChange(day.date)}
               // The container clips the grid with rounded-xl + overflow-hidden, so the
               // two bottom corner cells carry a matching radius (12px outer − 1px
@@ -217,6 +230,7 @@ export function TransactionCalendarView({
                   mask={mask}
                   density={density}
                   metric={metric}
+                  showProjectedBalance={day.date >= today}
                   onSelect={() => onSelectedDateChange(day.date)}
                 />
                 {selected && (
@@ -229,6 +243,7 @@ export function TransactionCalendarView({
                     dateLocale={dateLocale}
                     mask={mask}
                     metric={metric}
+                    today={today}
                     accountById={accountById}
                     userCurrency={userCurrency}
                     onOpenTransaction={onOpenTransaction}
@@ -248,6 +263,7 @@ export function TransactionCalendarView({
         dateLocale={dateLocale}
         mask={mask}
         metric={metric}
+        today={today}
         accountById={accountById}
         userCurrency={userCurrency}
         onOpenTransaction={onOpenTransaction}
@@ -674,6 +690,7 @@ function DayCell({
   mask,
   density,
   metric,
+  showProjectedBalance,
   onSelect,
   className,
 }: {
@@ -685,6 +702,7 @@ function DayCell({
   mask: (value: string) => string
   density: CalendarDensity
   metric: CalendarMetric
+  showProjectedBalance: boolean
   onSelect: () => void
   className?: string
 }) {
@@ -758,11 +776,20 @@ function DayCell({
         <DayCellActivity day={day} currency={currency} locale={locale} mask={mask} />
       )}
 
+      {metric === 'balance' && showProjectedBalance && (
+        <ProjectedBalanceCaption
+          amount={day.ending_balance}
+          currency={currency}
+          locale={locale}
+          mask={mask}
+        />
+      )}
+
       {detailed && previewItems.length > 0 && (
         <div className="mt-3 space-y-1.5 pr-1">
           {previewItems.map((item) => (
             <DayPreviewRow
-              key={`${item.kind}-${item.id ?? item.recurring_id}-${item.date}`}
+              key={calendarItemKey(item)}
               item={item}
               locale={locale}
               mask={mask}
@@ -787,6 +814,33 @@ function DayCell({
 // so the row keeps a single line even on the narrowest screens.
 const PREVIEW_DESCRIPTION_MAX_CHARS = 20
 
+function calendarItemKey(item: TransactionCalendarItem) {
+  return `${item.kind}-${item.id ?? item.recurring_id ?? 'bill'}-${item.description}-${item.amount}-${item.date}`
+}
+
+function ProjectedBalanceCaption({
+  amount,
+  currency,
+  locale,
+  mask,
+}: {
+  amount: number
+  currency: string
+  locale: string
+  mask: (value: string) => string
+}) {
+  const { t } = useTranslation()
+  return (
+    <p data-testid="projected-balance" className="mt-1 text-[11px] leading-snug text-muted-foreground">
+      <span className="font-semibold uppercase tracking-wide">{t('transactions.calendarProjectedBalance')}</span>
+      {' '}
+      <span className="font-semibold tabular-nums text-foreground">
+        {mask(formatCurrency(amount, currency, locale))}
+      </span>
+    </p>
+  )
+}
+
 function previewDescription(description: string) {
   if (description.length <= PREVIEW_DESCRIPTION_MAX_CHARS) return description
   return `${description.slice(0, PREVIEW_DESCRIPTION_MAX_CHARS).trimEnd()}…`
@@ -809,6 +863,7 @@ function DayPreviewRow({
   return (
     <div
       title={label}
+      data-testid={item.kind === 'projected' && item.id == null ? 'projected-bill-line' : undefined}
       className={cn(
         'flex items-center gap-1.5 rounded-md px-1.5 py-1 text-[11px] shadow-sm',
         item.kind === 'projected'
@@ -965,6 +1020,7 @@ function MobileDayRow({
   mask,
   density,
   metric,
+  showProjectedBalance,
   onSelect,
 }: {
   day: TransactionCalendarDay
@@ -976,6 +1032,7 @@ function MobileDayRow({
   mask: (value: string) => string
   density: CalendarDensity
   metric: CalendarMetric
+  showProjectedBalance: boolean
   onSelect: () => void
 }) {
   const { t } = useTranslation()
@@ -1005,9 +1062,19 @@ function MobileDayRow({
         </div>
         <div className="flex flex-col items-end gap-0.5 text-right">
           {metric === 'balance' ? (
-            <p className={cn('text-sm font-bold tabular-nums', day.ending_balance < 0 ? 'text-rose-600 dark:text-rose-400' : 'text-emerald-600 dark:text-emerald-400')}>
-              {mask(formatCurrency(day.ending_balance, currency, locale))}
-            </p>
+            <div className="flex flex-col items-end">
+              <p className={cn('text-sm font-bold tabular-nums', day.ending_balance < 0 ? 'text-rose-600 dark:text-rose-400' : 'text-emerald-600 dark:text-emerald-400')}>
+                {mask(formatCurrency(day.ending_balance, currency, locale))}
+              </p>
+              {showProjectedBalance && (
+                <ProjectedBalanceCaption
+                  amount={day.ending_balance}
+                  currency={currency}
+                  locale={locale}
+                  mask={mask}
+                />
+              )}
+            </div>
           ) : (
             <DayCellActivity day={day} currency={currency} locale={locale} mask={mask} align="right" />
           )}
@@ -1018,7 +1085,7 @@ function MobileDayRow({
         <div className="mt-2 space-y-1.5">
           {previewItems.map((item) => (
             <DayPreviewRow
-              key={`${item.kind}-${item.id ?? item.recurring_id}-${item.date}`}
+              key={calendarItemKey(item)}
               item={item}
               locale={locale}
               mask={mask}
@@ -1045,6 +1112,7 @@ function SelectedDayPanel({
   dateLocale,
   mask,
   metric,
+  today,
   accountById,
   userCurrency,
   onOpenTransaction,
@@ -1057,6 +1125,7 @@ function SelectedDayPanel({
   dateLocale: string
   mask: (value: string) => string
   metric: CalendarMetric
+  today: string
   accountById: Map<string, Account>
   userCurrency: string
   onOpenTransaction: (id: string) => void
@@ -1086,6 +1155,14 @@ function SelectedDayPanel({
             <h3 className="truncate text-lg font-bold text-foreground">
               {parseLocalDate(day.date).toLocaleDateString(dateLocale, { weekday: 'long', day: 'numeric', month: 'long' })}
             </h3>
+            {metric === 'balance' && day.date >= today && (
+              <ProjectedBalanceCaption
+                amount={day.ending_balance}
+                currency={currency}
+                locale={locale}
+                mask={mask}
+              />
+            )}
           </div>
           <p
             title={headlineLabel}
@@ -1161,7 +1238,7 @@ function SelectedDayPanel({
         ) : (
           day.items.map((item) => (
             <CalendarItemRow
-              key={`${item.kind}-${item.id ?? item.recurring_id}-${item.date}`}
+              key={calendarItemKey(item)}
               item={item}
               account={item.account_id ? accountById.get(item.account_id) : undefined}
               locale={locale}
@@ -1224,8 +1301,10 @@ function CalendarItemRow({
       type="button"
       disabled={!interactive}
       onClick={() => { if (item.id) onOpenTransaction(item.id) }}
+      data-testid={item.kind === 'projected' && item.id == null ? 'projected-bill-line' : undefined}
       className={cn(
         'w-full flex items-center gap-3 pl-3 pr-3 py-3 text-left',
+        item.kind === 'projected' && 'border border-dashed border-violet-400/70',
         interactive
           ? 'hover:bg-muted/50 active:bg-muted/60 transition-colors'
           : 'cursor-default opacity-80',

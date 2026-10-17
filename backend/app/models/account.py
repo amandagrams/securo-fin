@@ -38,6 +38,16 @@ class Account(Base):
     credit_limit: Mapped[Optional[Decimal]] = mapped_column(Numeric(precision=15, scale=2), nullable=True)
     statement_close_day: Mapped[Optional[int]] = mapped_column(SmallInteger, nullable=True)
     payment_due_day: Mapped[Optional[int]] = mapped_column(SmallInteger, nullable=True)
+    # Checking account that pays this card's bill. Only a credit card may set
+    # it; the target is an open checking account in the same workspace. Null
+    # on every card a sync creates — the link is the user's, never inferred.
+    # ON DELETE SET NULL so closing the checking account keeps the card.
+    payment_account_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("accounts.id", ondelete="SET NULL", use_alter=True, name="fk_accounts_payment_account_id"),
+        nullable=True,
+        index=True,
+    )
     minimum_payment: Mapped[Optional[Decimal]] = mapped_column(Numeric(precision=15, scale=2), nullable=True)
     card_brand: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
     card_level: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)

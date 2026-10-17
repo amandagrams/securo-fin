@@ -25,6 +25,9 @@ class AccountCreate(BaseModel):
     minimum_payment: Optional[Decimal] = None
     card_brand: Optional[str] = None
     card_level: Optional[str] = None
+    # Required when type is credit_card. The service rejects a missing or
+    # unusable target before inserting the row.
+    payment_account_id: Optional[uuid.UUID] = None
 
 
 class AccountUpdate(BaseModel):
@@ -39,6 +42,9 @@ class AccountUpdate(BaseModel):
     minimum_payment: Optional[Decimal] = None
     card_brand: Optional[str] = None
     card_level: Optional[str] = None
+    # Null clears the link. Omitted leaves it alone. Only a credit card may
+    # point it at an open checking account in this workspace.
+    payment_account_id: Optional[uuid.UUID] = None
 
 
 class AccountRead(AccountBase):
@@ -62,6 +68,7 @@ class AccountRead(AccountBase):
     available_credit: Optional[float] = None
     statement_close_day: Optional[int] = None
     payment_due_day: Optional[int] = None
+    payment_account_id: Optional[uuid.UUID] = None
     next_close_date: Optional[date] = None
     next_due_date: Optional[date] = None
     minimum_payment: Optional[float] = None

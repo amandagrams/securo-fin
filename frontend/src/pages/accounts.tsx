@@ -171,8 +171,17 @@ export default function AccountsPage() {
   })
 
   const createMutation = useMutation({
-    mutationFn: (data: { name: string; type: string; balance?: number; currency?: string }) =>
-      accounts.create(data),
+    mutationFn: (data: {
+      name: string
+      type: string
+      balance?: number
+      balance_date?: string
+      currency?: string
+      credit_limit?: number | null
+      statement_close_day?: number | null
+      payment_due_day?: number | null
+      payment_account_id?: string | null
+    }) => accounts.create(data),
     onSuccess: () => {
       invalidateFinancialQueries(queryClient)
       setDialogOpen(false)
@@ -652,11 +661,19 @@ export default function AccountsPage() {
         open={dialogOpen}
         onClose={() => { setDialogOpen(false); setEditingAccount(null) }}
         account={editingAccount}
+        checkingAccounts={(accountsList ?? []).filter((account) => account.type === 'checking' && !account.is_closed)}
         onSave={(data) => {
           if (editingAccount) {
             updateMutation.mutate({ id: editingAccount.id, ...data })
           } else {
-            createMutation.mutate(data as { name: string; type: string; balance?: number; balance_date?: string; currency?: string })
+            createMutation.mutate(data as {
+              name: string
+              type: string
+              balance?: number
+              balance_date?: string
+              currency?: string
+              payment_account_id?: string | null
+            })
           }
         }}
         loading={createMutation.isPending || updateMutation.isPending}
@@ -669,12 +686,14 @@ function AccountDialog({
   open,
   onClose,
   account,
+  checkingAccounts,
   onSave,
   loading,
 }: {
   open: boolean
   onClose: () => void
   account: Account | null
+  checkingAccounts: Account[]
   onSave: (data: {
     name?: string
     display_name?: string | null
@@ -685,6 +704,7 @@ function AccountDialog({
     credit_limit?: number | null
     statement_close_day?: number | null
     payment_due_day?: number | null
+    payment_account_id?: string | null
   }) => void
   loading: boolean
 }) {
@@ -705,6 +725,7 @@ function AccountDialog({
   const [creditLimit, setCreditLimit] = useState(account?.credit_limit?.toString() ?? '')
   const [statementCloseDay, setStatementCloseDay] = useState(account?.statement_close_day?.toString() ?? '')
   const [paymentDueDay, setPaymentDueDay] = useState(account?.payment_due_day?.toString() ?? '')
+  const [paymentAccountId, setPaymentAccountId] = useState(account?.payment_account_id ?? '')
 
   const [formSource, setFormSource] = useState<{ account: typeof account } | null>(null)
   if (!formSource || formSource.account !== account) {
@@ -718,6 +739,7 @@ function AccountDialog({
     setCreditLimit(account?.credit_limit?.toString() ?? '')
     setStatementCloseDay(account?.statement_close_day?.toString() ?? '')
     setPaymentDueDay(account?.payment_due_day?.toString() ?? '')
+    setPaymentAccountId(account?.payment_account_id ?? '')
   }
 
   return (
@@ -738,6 +760,10 @@ function AccountDialog({
               return Number.isFinite(n) && n >= 1 && n <= 31 ? n : null
             }
             const isConnected = !!account?.connection_id
+            // A new card has to name the checking account that pays the bill.
+            // An existing card is edited in its own settings dialog, which may
+            // leave the pointer empty.
+            if (!account && isCC && !paymentAccountId) return
             onSave({
               ...(!isConnected && { name, balance: parseFloat(balance), balance_date: balanceDate, currency }),
               type,
@@ -747,6 +773,7 @@ function AccountDialog({
                 statement_close_day: parseDay(statementCloseDay),
                 payment_due_day: parseDay(paymentDueDay),
               }),
+              ...(!account && isCC && { payment_account_id: paymentAccountId }),
             })
           }}
           className="space-y-4"
@@ -853,6 +880,24 @@ function AccountDialog({
                   placeholder="0.00"
                 />
               </div>
+              {!account && (
+                <div className="space-y-2">
+                  <Label htmlFor="payment-account">{t('accounts.paymentAccount')}</Label>
+                  <select
+                    id="payment-account"
+                    aria-label={t('accounts.paymentAccount')}
+                    required
+                    className="w-full border border-border rounded-lg px-3 py-2 text-sm bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                    value={paymentAccountId}
+                    onChange={(e) => setPaymentAccountId(e.target.value)}
+                  >
+                    <option value="" />
+                    {checkingAccounts.map((checking) => (
+                      <option key={checking.id} value={checking.id}>{getAccountName(checking)}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label>{t('accounts.statementCloseDay')}</Label>

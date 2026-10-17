@@ -345,9 +345,11 @@ async def test_transaction_calendar_transfer_buckets_stay_out_of_activity(
         id=uuid.uuid4(), user_id=test_user.id, workspace_id=test_workspace.id,
         name="Checking", type="checking", balance=Decimal("0"), currency="BRL",
     )
+    # Both legs are checking. An unfiltered month only sums open checking
+    # accounts, and this test is about the two legs cancelling.
     savings = Account(
         id=uuid.uuid4(), user_id=test_user.id, workspace_id=test_workspace.id,
-        name="Savings", type="savings", balance=Decimal("0"), currency="BRL",
+        name="Savings", type="checking", balance=Decimal("0"), currency="BRL",
     )
     transfer_category = Category(
         id=uuid.uuid4(), user_id=test_user.id, workspace_id=test_workspace.id,
