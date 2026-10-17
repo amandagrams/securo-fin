@@ -930,6 +930,8 @@
     "minimumPayment": "Ελάχιστη καταβολή",
     "noChargesYet": "Δεν υπάρχουν χρεώσεις ακόμα σε αυτόν τον κύκλο",
     "noCard": "Χωρίς κάρτα",
+    "upcomingBills": "Επερχόμενοι λογαριασμοί",
+    "upcomingBillsEstimate": "εκτίμηση από γνωστές δόσεις και χρεώσεις",
     "billCompositionTitle": "Από πού προέρχεται αυτό το ποσό",
     "billPurchases": "Αγορές",
     "billRefunds": "Επιστροφές",

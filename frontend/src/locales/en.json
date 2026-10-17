@@ -1200,6 +1200,8 @@
     "minimumPayment": "Minimum",
     "noChargesYet": "No charges yet this cycle",
     "noCard": "No card",
+    "upcomingBills": "Upcoming bills",
+    "upcomingBillsEstimate": "estimate from known installments and charges",
     "billCompositionTitle": "Where this amount comes from",
     "billPurchases": "Purchases",
     "billRefunds": "Refunds",

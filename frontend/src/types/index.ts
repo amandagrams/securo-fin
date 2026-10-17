@@ -199,6 +199,22 @@ export interface CreditCardBill {
   minimum_payment: number | null
 }
 
+/** One cycle after the bill in progress. Totals are already computed. */
+export interface UpcomingBillCycle {
+  due_date: string
+  close_date: string
+  committed_total: number
+  committed_total_primary: number
+  currency: string
+}
+
+/** Future commitments on a credit card. Null totals mean the account cannot project. */
+export interface UpcomingBills {
+  cycles: UpcomingBillCycle[]
+  future_committed_total: number | null
+  future_committed_total_primary: number | null
+}
+
 /** A card seen on an account's transactions and the name the user gave it.
  *  Keyed by (account, card_number); not an account — no balance, no limit.
  *  Only cards that appeared on at least one transaction are listed. */

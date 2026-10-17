@@ -1256,6 +1256,8 @@
     "minimumPayment": "Minimum",
     "noChargesYet": "V tomto cykle zatiaľ žiadne čerpanie",
     "noCard": "Bez karty",
+    "upcomingBills": "Nadchádzajúce faktúry",
+    "upcomingBillsEstimate": "odhad zo známych splátok a pohybov",
     "billCompositionTitle": "Odkiaľ táto suma pochádza",
     "billPurchases": "Nákupy",
     "billRefunds": "Vrátenia",

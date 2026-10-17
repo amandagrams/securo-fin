@@ -1244,6 +1244,8 @@
     "minimumPayment": "Minimalna",
     "noChargesYet": "Brak obciążeń w tym cyklu",
     "noCard": "Bez karty",
+    "upcomingBills": "Nadchodzące faktury",
+    "upcomingBillsEstimate": "szacunek na podstawie znanych rat i obciążeń",
     "billCompositionTitle": "Skąd bierze się ta kwota",
     "billPurchases": "Zakupy",
     "billRefunds": "Zwroty",
