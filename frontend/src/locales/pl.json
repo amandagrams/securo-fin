@@ -892,7 +892,10 @@
     "fxRateUsed": "Kurs FX: {{rate}}",
     "refreshRates": "Odśwież kursy FX",
     "ratesRefreshed": "Zaktualizowano kursy FX",
-    "ratesError": "Nie udało się zaktualizować kursów FX"
+    "ratesError": "Nie udało się zaktualizować kursów FX",
+    "openBills": "Otwarte rachunki",
+    "openBillsSubtitle": "{{count}} kart · termin {{date}}",
+    "openBillsDue": "termin {{date}}"
   },
   "transactions": {
     "title": "Transakcje",
@@ -1244,6 +1247,16 @@
     "minimumPayment": "Minimalna",
     "noChargesYet": "Brak obciążeń w tym cyklu",
     "noCard": "Bez karty",
+    "upcomingBills": "Nadchodzące faktury",
+    "upcomingBillsEstimate": "szacunek na podstawie znanych rat i obciążeń",
+    "billCompositionTitle": "Skąd bierze się ta kwota",
+    "billPurchases": "Zakupy",
+    "billRefunds": "Zwroty",
+    "billTotalLine": "Rachunek",
+    "billOpen": "Otwarty rachunek · zamyka się {{close}} · termin {{due}}",
+    "billClosedDue": "Zamknięty rachunek · zamknięty {{close}} · termin {{due}}",
+    "billClosedWasDue": "Zamknięty rachunek · zamknięty {{close}} · termin minął {{due}}",
+    "billEstimated": "Szacunkowo — bank nie zamknął jeszcze tego rachunku; sumujemy obciążenia, które już przysłał",
     "cardNames": "Nazwy kart",
     "noCardsSeen": "Na tym koncie nie widać jeszcze żadnej karty.",
     "currentTag": "teraz",

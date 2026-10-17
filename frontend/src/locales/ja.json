@@ -878,7 +878,10 @@
     "fxRateUsed": "為替レート: {{rate}}",
     "refreshRates": "為替レートを更新",
     "ratesRefreshed": "為替レートを更新しました",
-    "ratesError": "為替レートの更新に失敗しました"
+    "ratesError": "為替レートの更新に失敗しました",
+    "openBills": "未払いの請求",
+    "openBillsSubtitle": "{{count}}枚のカード · 期日 {{date}}",
+    "openBillsDue": "期日 {{date}}"
   },
   "transactions": {
     "title": "取引",
@@ -1200,6 +1203,16 @@
     "minimumPayment": "最低支払額",
     "noChargesYet": "今サイクルの請求はまだありません",
     "noCard": "カードなし",
+    "upcomingBills": "今後の請求",
+    "upcomingBillsEstimate": "判明している分割払いと明細からの見積もり",
+    "billCompositionTitle": "この金額の内訳",
+    "billPurchases": "購入",
+    "billRefunds": "返金",
+    "billTotalLine": "請求",
+    "billOpen": "未確定の請求 · 締め {{close}} · 支払日 {{due}}",
+    "billClosedDue": "確定した請求 · 締め日 {{close}} · 支払日 {{due}}",
+    "billClosedWasDue": "確定した請求 · 締め日 {{close}} · 支払日は {{due}}",
+    "billEstimated": "概算 — 銀行はまだこの請求を確定していません。届いた利用を合計しています",
     "cardNames": "カード名",
     "noCardsSeen": "この口座ではまだカードが確認されていません。",
     "currentTag": "現在",

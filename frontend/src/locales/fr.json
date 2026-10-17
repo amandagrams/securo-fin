@@ -880,7 +880,10 @@
     "fxRateUsed": "Taux de change : {{rate}}",
     "refreshRates": "Actualiser les taux de change",
     "ratesRefreshed": "Taux de change mis à jour",
-    "ratesError": "Échec de la mise à jour des taux de change"
+    "ratesError": "Échec de la mise à jour des taux de change",
+    "openBills": "Factures ouvertes",
+    "openBillsSubtitle": "{{count}} cartes · échéance {{date}}",
+    "openBillsDue": "échéance {{date}}"
   },
   "transactions": {
     "title": "Transactions",
@@ -1204,6 +1207,16 @@
     "minimumPayment": "Minimum",
     "noChargesYet": "Aucun prélèvement pour ce cycle",
     "noCard": "Sans carte",
+    "upcomingBills": "Prochaines factures",
+    "upcomingBillsEstimate": "estimation à partir des mensualités et opérations déjà connues",
+    "billCompositionTitle": "D'où vient ce montant",
+    "billPurchases": "Achats",
+    "billRefunds": "Remboursements",
+    "billTotalLine": "Facture",
+    "billOpen": "Facture ouverte · clôture {{close}} · échéance {{due}}",
+    "billClosedDue": "Facture close · clôturée {{close}} · échéance {{due}}",
+    "billClosedWasDue": "Facture close · clôturée {{close}} · échue {{due}}",
+    "billEstimated": "Estimé — la banque n'a pas encore clos cette facture ; nous additionnons les achats qu'elle a déjà envoyés",
     "cardNames": "Noms des cartes",
     "noCardsSeen": "Aucune carte n'a encore été vue sur ce compte.",
     "currentTag": "actuel",

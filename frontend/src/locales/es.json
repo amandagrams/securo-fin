@@ -880,7 +880,10 @@
     "fxRateUsed": "Tipo de cambio: {{rate}}",
     "refreshRates": "Actualizar tipos FX",
     "ratesRefreshed": "Tipos FX actualizados",
-    "ratesError": "No se pudo actualizar los tipos FX"
+    "ratesError": "No se pudo actualizar los tipos FX",
+    "openBills": "Facturas abiertas",
+    "openBillsSubtitle": "{{count}} tarjetas · vence {{date}}",
+    "openBillsDue": "vence {{date}}"
   },
   "transactions": {
     "title": "Transacciones",
@@ -1204,6 +1207,16 @@
     "minimumPayment": "Pago mínimo",
     "noChargesYet": "Aún no hay cargos este ciclo",
     "noCard": "Sin tarjeta",
+    "upcomingBills": "Próximas facturas",
+    "upcomingBillsEstimate": "estimación con las cuotas y cargos ya conocidos",
+    "billCompositionTitle": "De dónde sale este importe",
+    "billPurchases": "Compras",
+    "billRefunds": "Reembolsos",
+    "billTotalLine": "Factura",
+    "billOpen": "Factura abierta · cierra {{close}} · vence {{due}}",
+    "billClosedDue": "Factura cerrada · cerró {{close}} · vence {{due}}",
+    "billClosedWasDue": "Factura cerrada · cerró {{close}} · venció {{due}}",
+    "billEstimated": "Estimado — el banco aún no ha cerrado esta factura; sumamos los cargos que ya envió",
     "cardNames": "Nombres de tarjetas",
     "noCardsSeen": "Aún no se ha visto ninguna tarjeta en esta cuenta.",
     "currentTag": "ahora",

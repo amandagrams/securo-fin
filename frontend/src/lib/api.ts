@@ -18,6 +18,7 @@ import type {
   AccountSummary,
   Collection,
   CreditCardBill,
+  UpcomingBills,
   Transaction,
   Payee,
   PayeeSummary,
@@ -77,6 +78,7 @@ import type {
   Goal,
   GoalSummary,
   DashboardSummary,
+  OpenCreditCardBills,
   SpendingByCategory,
   CategoryFlows,
   MonthlyTrend,
@@ -490,6 +492,12 @@ export const accounts = {
   },
   bills: async (id: string, limit = 24): Promise<CreditCardBill[]> => {
     const { data } = await api.get(`/accounts/${id}/bills`, { params: { limit } })
+    return data
+  },
+  // Cycles after the one in progress. The server projects installments; the
+  // client only renders the payload.
+  upcomingBills: async (id: string, cycles = 6): Promise<UpcomingBills> => {
+    const { data } = await api.get(`/accounts/${id}/upcoming-bills`, { params: { cycles } })
     return data
   },
   // Cards seen on the account's transactions, account's own card first.
@@ -1328,6 +1336,10 @@ export const dashboard = {
   },
   categoryFlows: async (month?: string): Promise<CategoryFlows> => {
     const { data } = await api.get('/dashboard/category-flows', { params: { month } })
+    return data
+  },
+  creditCardBills: async (): Promise<OpenCreditCardBills> => {
+    const { data } = await api.get('/dashboard/credit-card-bills')
     return data
   },
 }

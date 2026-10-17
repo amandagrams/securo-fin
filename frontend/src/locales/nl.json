@@ -878,7 +878,10 @@
     "fxRateUsed": "Wisselkoers: {{rate}}",
     "refreshRates": "Vernieuw de wisselkoersen",
     "ratesRefreshed": "FX-tarieven bijgewerkt",
-    "ratesError": "Kan de valutakoersen niet updaten"
+    "ratesError": "Kan de valutakoersen niet updaten",
+    "openBills": "Openstaande facturen",
+    "openBillsSubtitle": "{{count}} kaarten · vervalt {{date}}",
+    "openBillsDue": "vervalt {{date}}"
   },
   "transactions": {
     "title": "Transacties",
@@ -1201,6 +1204,16 @@
     "minimumPayment": "Minimaal",
     "noChargesYet": "Nog geen kosten deze cyclus",
     "noCard": "Geen kaart",
+    "upcomingBills": "Komende facturen",
+    "upcomingBillsEstimate": "schatting op basis van bekende termijnen en boekingen",
+    "billCompositionTitle": "Waar dit bedrag vandaan komt",
+    "billPurchases": "Aankopen",
+    "billRefunds": "Terugbetalingen",
+    "billTotalLine": "Factuur",
+    "billOpen": "Open factuur · sluit {{close}} · vervalt {{due}}",
+    "billClosedDue": "Gesloten factuur · gesloten {{close}} · vervalt {{due}}",
+    "billClosedWasDue": "Gesloten factuur · gesloten {{close}} · verviel {{due}}",
+    "billEstimated": "Geschat — de bank heeft deze factuur nog niet gesloten; we tellen de afschrijvingen op die ze al stuurde",
     "cardNames": "Kaartnamen",
     "noCardsSeen": "Er is nog geen kaart op dit account gezien.",
     "currentTag": "nu",
