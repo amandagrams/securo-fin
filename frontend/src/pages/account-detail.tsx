@@ -22,7 +22,7 @@ import { MobileTransactionRow } from '@/components/mobile-transaction-row'
 import { CategoryIcon } from '@/components/category-icon'
 import { ProjectedTransactionBadge } from '@/components/projected-transaction-badge'
 import { UpcomingBillsSection } from '@/components/upcoming-bills-section'
-import { TransactionDialog, type TransactionSavePayload } from '@/components/transaction-dialog'
+import { TransactionDialog, type RecurringSaveInput, type TransactionSavePayload } from '@/components/transaction-dialog'
 import { extractApiError } from '@/lib/api-errors'
 import { TransferDialog } from '@/components/transfer-dialog'
 import { DatePickerInput } from '@/components/ui/date-picker-input'
@@ -34,7 +34,7 @@ import { usePrivacyMode } from '@/hooks/use-privacy-mode'
 import { useIsMobile } from '@/hooks/use-mobile'
 import { useAuth } from '@/contexts/auth-context'
 import { useWorkspace } from '@/contexts/workspace-context'
-import { useCreateTransaction } from '@/hooks/use-create-transaction'
+import { saveEditedTransaction, useCreateTransaction } from '@/hooks/use-create-transaction'
 import { resolveDateFnsLocale } from '@/lib/date-fns-locale'
 import { formatCurrency } from '@/lib/format'
 import {
@@ -593,8 +593,12 @@ export default function AccountDetailPage() {
   })
 
   const updateMutation = useMutation({
-    mutationFn: ({ id: txId, ...data }: TransactionSavePayload & { id: string }) =>
-      transactions.update(txId, data),
+    mutationFn: ({
+      id: txId,
+      recurringData,
+      ...data
+    }: TransactionSavePayload & { id: string; recurringData?: RecurringSaveInput }) =>
+      saveEditedTransaction(txId, data, recurringData),
     onSuccess: () => {
       invalidateFinancialQueries(queryClient)
       setDialogOpen(false)
@@ -1884,7 +1888,7 @@ export default function AccountDetailPage() {
         accounts={accountsList ?? []}
         onSave={(data, recurringData, installmentData, pendingFiles, action) => {
           if (editingTx) {
-            updateMutation.mutate({ id: editingTx.id, ...data })
+            updateMutation.mutate({ id: editingTx.id, ...data, recurringData })
           } else {
             createTransaction(data, recurringData, installmentData, pendingFiles, action)
           }

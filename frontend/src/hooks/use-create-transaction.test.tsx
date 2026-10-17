@@ -11,6 +11,7 @@ const api = vi.hoisted(() => ({
   transactions: {
     create: vi.fn(),
     createInstallments: vi.fn(),
+    makeRecurring: vi.fn(),
     attachments: { upload: vi.fn() },
   },
   recurring: { create: vi.fn() },
@@ -41,6 +42,7 @@ beforeEach(() => {
   queryClient = createTestQueryClient()
   api.transactions.create.mockResolvedValue({ id: 'tx-1' })
   api.transactions.createInstallments.mockResolvedValue([{ id: 'tx-a' }, { id: 'tx-b' }])
+  api.transactions.makeRecurring.mockResolvedValue({ id: 'tx-1', recurring_transaction_id: 'rec-1' })
   api.transactions.attachments.upload.mockResolvedValue({})
   api.recurring.create.mockResolvedValue({})
 })
@@ -62,21 +64,20 @@ describe('useCreateTransaction', () => {
     expect(keys).toEqual(expect.arrayContaining(['transactions', 'accounts', 'dashboard', 'recurring']))
   })
 
-  it('creates a recurring entry that skips the first occurrence', async () => {
+  it('links the created transaction with one make-recurring call', async () => {
     const onDone = vi.fn()
     const { result } = renderHook(() => useCreateTransaction({ onDone }), { wrapper })
 
-    act(() => result.current.create(tx, { frequency: 'monthly' }))
+    act(() => result.current.create(tx, { frequency: 'monthly', day_of_month: 15, end_date: '2027-01-01' }))
 
     await waitFor(() => expect(onDone).toHaveBeenCalled())
-    expect(api.recurring.create).toHaveBeenCalledWith(expect.objectContaining({
-      description: 'Coffee',
-      currency: 'BRL',
+    expect(api.transactions.create).toHaveBeenCalledWith(tx)
+    expect(api.transactions.makeRecurring).toHaveBeenCalledWith('tx-1', {
       frequency: 'monthly',
-      start_date: '2026-09-23',
-      account_id: 'acc-1',
-      skip_first: true,
-    }))
+      day_of_month: 15,
+      end_date: '2027-01-01',
+    })
+    expect(api.recurring.create).not.toHaveBeenCalled()
   })
 
   it('creates an installment series and attaches files to its first row', async () => {

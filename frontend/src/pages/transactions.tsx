@@ -43,7 +43,7 @@ import { calculateRangeSelection } from '@/lib/selection-utils'
 import { isManualInstallmentSeriesRow } from '@/lib/installment-series'
 import { CategoryIcon } from '@/components/category-icon'
 import { CategorySelect } from '@/components/category-select'
-import { TransactionDialog, type SaveAction, type TransactionSavePayload } from '@/components/transaction-dialog'
+import { TransactionDialog, type RecurringSaveInput, type SaveAction, type TransactionSavePayload } from '@/components/transaction-dialog'
 import { extractApiError } from '@/lib/api-errors'
 import { TransactionsColumnPicker } from '@/components/transactions-column-picker'
 import { TransactionsPageActions } from '@/components/transactions-page-actions'
@@ -58,7 +58,7 @@ import { TransactionsFilterBar } from '@/components/transactions-filter-bar'
 import { TransactionCalendarView } from '@/components/transaction-calendar-view'
 import { usePrivacyMode } from '@/hooks/use-privacy-mode'
 import { useIsMobile } from '@/hooks/use-mobile'
-import { useCreateTransaction } from '@/hooks/use-create-transaction'
+import { saveEditedTransaction, useCreateTransaction } from '@/hooks/use-create-transaction'
 import { MobileTransactionRow } from '@/components/mobile-transaction-row'
 import { useAuth } from '@/contexts/auth-context'
 import { useWorkspace } from '@/contexts/workspace-context'
@@ -534,8 +534,12 @@ export default function TransactionsPage() {
   } = useCreateTransaction({ onDone: () => setDialogOpen(false) })
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, ...data }: TransactionUpdatePayload & { id: string }) =>
-      transactions.update(id, data),
+    mutationFn: ({
+      id,
+      recurringData,
+      ...data
+    }: TransactionUpdatePayload & { id: string; recurringData?: RecurringSaveInput }) =>
+      saveEditedTransaction(id, data, recurringData),
     onSuccess: () => {
       invalidateAfterTxMutation()
       setDialogOpen(false)
@@ -860,7 +864,7 @@ export default function TransactionsPage() {
 
   const handleTransactionSave = (
     data: TransactionSavePayload,
-    recurringData?: { frequency: string; end_date?: string },
+    recurringData?: RecurringSaveInput,
     installmentData?: InstallmentSeriesInput,
     pendingFiles?: File[],
     action?: SaveAction,
@@ -880,7 +884,7 @@ export default function TransactionsPage() {
       return
     }
 
-    updateMutation.mutate({ id: editingTx.id, ...data })
+    updateMutation.mutate({ id: editingTx.id, ...data, recurringData })
   }
 
   const submitPendingSeriesDelete = (scope: TransactionApplyScope) => {

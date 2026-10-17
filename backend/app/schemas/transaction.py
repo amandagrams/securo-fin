@@ -6,6 +6,7 @@ from typing import Literal, Optional
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from app.schemas.category import CategoryRead
+from app.schemas.recurring_transaction import DayOfMonth, RecurringFrequency
 from app.schemas.transaction_split import (
     TransactionSplitInput,
     TransactionSplitRead,
@@ -314,3 +315,25 @@ class TransactionImportRequest(BaseModel):
     filename: str = ""
     detected_format: str = ""
     detect_duplicates: bool = True
+
+
+class MakeTransactionRecurring(BaseModel):
+    """Body of POST /api/transactions/{id}/make-recurring.
+
+    The existing transaction is the first occurrence. ``day_of_month`` is only
+    meaningful for calendar frequencies; weekly and biweekly reject it.
+    """
+
+    frequency: RecurringFrequency
+    day_of_month: Optional[DayOfMonth] = None
+    end_date: Optional[_Date] = None
+
+    @model_validator(mode="before")
+    @classmethod
+    def day_of_month_not_with_weekly(cls, data):
+        if isinstance(data, dict) and data.get("frequency") in ("weekly", "biweekly"):
+            if data.get("day_of_month") is not None:
+                raise ValueError(
+                    "day_of_month cannot be set when frequency is weekly or biweekly"
+                )
+        return data

@@ -51,9 +51,31 @@ export type TransactionSavePayload = TransactionEditPayload & {
   apply_to?: TransactionApplyScope
 }
 
+export type RecurringSaveInput = {
+  frequency: string
+  day_of_month?: number
+  end_date?: string
+}
+
+const MAKE_RECURRING_FREQUENCIES = [
+  'monthly',
+  'quarterly',
+  'semiannual',
+  'weekly',
+  'biweekly',
+  'yearly',
+] as const
+
+const DAY_OF_MONTH_FREQUENCIES = new Set<RecurringTransaction['frequency']>([
+  'monthly',
+  'quarterly',
+  'semiannual',
+  'yearly',
+])
+
 type PendingInstallmentEdit = {
   data: TransactionEditPayload
-  recurringData?: { frequency: string; end_date?: string }
+  recurringData?: RecurringSaveInput
   installmentData?: InstallmentSeriesInput
   pendingFiles?: File[]
   action?: SaveAction
@@ -118,7 +140,7 @@ export function TransactionDialog({
   categoryGroups: CategoryGroup[]
   accounts: { id: string; name: string; display_name?: string | null; type?: string; currency?: string }[]
   recurringMatch?: RecurringTransaction
-  onSave: (data: TransactionSavePayload, recurringData?: { frequency: string; end_date?: string }, installmentData?: InstallmentSeriesInput, pendingFiles?: File[], action?: SaveAction) => void
+  onSave: (data: TransactionSavePayload, recurringData?: RecurringSaveInput, installmentData?: InstallmentSeriesInput, pendingFiles?: File[], action?: SaveAction) => void
   onDelete?: () => void
   onUnlinkTransfer?: (pairId: string) => void
   onIgnoreChanged?: () => void
@@ -171,7 +193,7 @@ export function TransactionDialog({
 
   const handleSave = (
     data: TransactionEditPayload,
-    recurringData?: { frequency: string; end_date?: string },
+    recurringData?: RecurringSaveInput,
     installmentData?: InstallmentSeriesInput,
     pendingFiles?: File[],
     action?: SaveAction,
@@ -407,7 +429,7 @@ function TransactionForm({
   categoryGroups: CategoryGroup[]
   accounts: { id: string; name: string; display_name?: string | null; type?: string; currency?: string }[]
   recurringMatch?: RecurringTransaction
-  onSave: (data: TransactionEditPayload, recurringData?: { frequency: string; end_date?: string }, installmentData?: InstallmentSeriesInput, pendingFiles?: File[], action?: SaveAction) => void
+  onSave: (data: TransactionEditPayload, recurringData?: RecurringSaveInput, installmentData?: InstallmentSeriesInput, pendingFiles?: File[], action?: SaveAction) => void
   onDelete?: () => void
   onUnlinkTransfer?: (pairId: string) => void
   onIgnoreChanged?: () => void
@@ -473,6 +495,7 @@ function TransactionForm({
   )
   const [isRecurring, setIsRecurring] = useState(false)
   const [frequency, setFrequency] = useState<RecurringTransaction['frequency']>('monthly')
+  const [dayOfMonth, setDayOfMonth] = useState('')
   const [endDate, setEndDate] = useState('')
   // Manual installment series: when checked, the save handler
   // builds an InstallmentSeriesInput payload that repeats the transaction
@@ -741,6 +764,14 @@ function TransactionForm({
     }
   }
 
+  const canMarkRecurring =
+    !recurringLinked &&
+    !transaction?.transfer_pair_id &&
+    transaction?.installment_number == null &&
+    transaction?.installment_series_id == null
+  const showDayOfMonth = DAY_OF_MONTH_FREQUENCIES.has(frequency)
+  const showInstallmentToggle = isCreating && !isSynced
+
   return (
     <form
       ref={formRef}
@@ -832,8 +863,15 @@ function TransactionForm({
               ...overridePayload,
               ...splitsPayload,
             } as TransactionEditPayload
-        const recurringData = isCreating && isRecurring
-          ? { frequency, end_date: endDate || undefined }
+        const parsedDay = Number(dayOfMonth)
+        const recurringData = isRecurring && canMarkRecurring
+          ? {
+              frequency,
+              ...(showDayOfMonth && dayOfMonth.trim() !== '' && Number.isInteger(parsedDay)
+                ? { day_of_month: parsedDay }
+                : {}),
+              ...(endDate ? { end_date: endDate } : {}),
+            }
           : undefined
         const installmentData = isCreating && isInstallment && !isSynced
           ? buildInstallmentSeriesInput({
@@ -1282,54 +1320,73 @@ function TransactionForm({
         />
       )}
 
-      {/* Create options — recurring and installment toggles share one row
-          when creating non-synced transactions. "Repeat as installments"
-          mirrors the transaction N times for debits and receivables. */}
-      {isCreating && !isSynced && (
+      {/* Recurring is offered on create and on edit, including synced rows.
+          Installments stay create-only: a posted charge is not a series. */}
+      {(canMarkRecurring || showInstallmentToggle) && (
         <div className="space-y-3 border rounded-md p-3">
           <div className="flex items-center gap-6">
-            <label className="flex items-center gap-2 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={isRecurring}
-                onChange={(e) => {
-                  setIsRecurring(e.target.checked)
-                  if (e.target.checked) setIsInstallment(false)
-                }}
-                className="rounded border-gray-300"
-              />
-              <span className="text-sm font-medium">{t('transactions.makeRecurring')}</span>
-            </label>
-            <label className="flex items-center gap-2 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={isInstallment}
-                onChange={(e) => {
-                  setIsInstallment(e.target.checked)
-                  if (e.target.checked) setIsRecurring(false)
-                }}
-                className="rounded border-gray-300"
-              />
-              <span className="text-sm font-medium">{t('transactions.makeInstallment')}</span>
-            </label>
+            {canMarkRecurring && (
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={isRecurring}
+                  onChange={(e) => {
+                    setIsRecurring(e.target.checked)
+                    if (e.target.checked) setIsInstallment(false)
+                  }}
+                  className="rounded border-gray-300"
+                />
+                <span className="text-sm font-medium">{t('transactions.makeRecurring')}</span>
+              </label>
+            )}
+            {showInstallmentToggle && (
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={isInstallment}
+                  onChange={(e) => {
+                    setIsInstallment(e.target.checked)
+                    if (e.target.checked) setIsRecurring(false)
+                  }}
+                  className="rounded border-gray-300"
+                />
+                <span className="text-sm font-medium">{t('transactions.makeInstallment')}</span>
+              </label>
+            )}
           </div>
-          {isRecurring && (
+          {isRecurring && canMarkRecurring && (
             <div className="grid grid-cols-2 gap-4 pt-1">
               <div className="space-y-2">
                 <Label>{t('recurring.frequency')}</Label>
                 <select
                   className="w-full border border-border rounded-md px-3 py-2 text-sm bg-card focus:outline-none focus-visible:ring-ring/30 focus-visible:ring-[2px]"
                   value={frequency}
-                  onChange={(e) => setFrequency(e.target.value as RecurringTransaction['frequency'])}
+                  onChange={(e) => {
+                    const next = e.target.value as RecurringTransaction['frequency']
+                    setFrequency(next)
+                    if (!DAY_OF_MONTH_FREQUENCIES.has(next)) setDayOfMonth('')
+                  }}
                 >
-                  <option value="monthly">{t('recurring.monthly')}</option>
-                  <option value="quarterly">{t('recurring.quarterly')}</option>
-                  <option value="semiannual">{t('recurring.semiannual')}</option>
-                  <option value="weekly">{t('recurring.weekly')}</option>
-                  <option value="biweekly">{t('recurring.biweekly')}</option>
-                  <option value="yearly">{t('recurring.yearly')}</option>
+                  {MAKE_RECURRING_FREQUENCIES.map((value) => (
+                    <option key={value} value={value}>
+                      {t(`transactions.makeRecurringOptions.${value}`)}
+                    </option>
+                  ))}
                 </select>
               </div>
+              {showDayOfMonth && (
+                <div className="space-y-2">
+                  <Label>{t('recurring.dayOfMonth')}</Label>
+                  <Input
+                    type="number"
+                    min={1}
+                    max={31}
+                    value={dayOfMonth}
+                    onChange={(e) => setDayOfMonth(e.target.value)}
+                    className="bg-card"
+                  />
+                </div>
+              )}
               <div className="space-y-2">
                 <Label>{t('recurring.endDate')}</Label>
                 <DatePickerInput
