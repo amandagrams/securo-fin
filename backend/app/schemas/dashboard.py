@@ -76,6 +76,19 @@ class ProjectedTransaction(BaseModel):
     category_color: Optional[str] = None
 
 
+class CategoryFlowItem(BaseModel):
+    category_id: Optional[str]
+    category_name: str
+    category_icon: str
+    category_color: str
+    # Posted only. Outflows match SpendingByCategory.total for the same category.
+    total: float
+    percentage: float
+
+
+class CategoryFlows(BaseModel):
+    outflows: list[CategoryFlowItem]
+    inflows: list[CategoryFlowItem]
 class OpenCreditCardBill(BaseModel):
     """One open credit-card bill on the dashboard.
 

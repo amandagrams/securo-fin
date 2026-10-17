@@ -80,6 +80,7 @@ import type {
   DashboardSummary,
   OpenCreditCardBills,
   SpendingByCategory,
+  CategoryFlows,
   MonthlyTrend,
   BalanceHistory,
   PaginatedTransactions,
@@ -1331,6 +1332,10 @@ export const dashboard = {
   balanceHistory: async (month?: string, accountIds?: string[]): Promise<BalanceHistory> => {
     const extra = acctIdsParam(accountIds)
     const { data } = await api.get('/dashboard/balance-history', { params: { month, ...(extra.params ?? {}) }, ...(extra.paramsSerializer ? { paramsSerializer: extra.paramsSerializer } : {}) })
+    return data
+  },
+  categoryFlows: async (month?: string): Promise<CategoryFlows> => {
+    const { data } = await api.get('/dashboard/category-flows', { params: { month } })
     return data
   },
   creditCardBills: async (): Promise<OpenCreditCardBills> => {
