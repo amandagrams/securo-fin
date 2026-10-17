@@ -878,7 +878,10 @@
     "fxRateUsed": "Wechselkurs: {{rate}}",
     "refreshRates": "Wechselkurse aktualisieren",
     "ratesRefreshed": "Wechselkurse aktualisiert",
-    "ratesError": "Fehler beim Aktualisieren der Wechselkurse"
+    "ratesError": "Fehler beim Aktualisieren der Wechselkurse",
+    "openBills": "Offene Rechnungen",
+    "openBillsSubtitle": "{{count}} Karten · fällig {{date}}",
+    "openBillsDue": "fällig {{date}}"
   },
   "transactions": {
     "title": "Transaktionen",

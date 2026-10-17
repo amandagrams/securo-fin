@@ -880,7 +880,10 @@
     "fxRateUsed": "Tipo de cambio: {{rate}}",
     "refreshRates": "Actualizar tipos FX",
     "ratesRefreshed": "Tipos FX actualizados",
-    "ratesError": "No se pudo actualizar los tipos FX"
+    "ratesError": "No se pudo actualizar los tipos FX",
+    "openBills": "Facturas abiertas",
+    "openBillsSubtitle": "{{count}} tarjetas · vence {{date}}",
+    "openBillsDue": "vence {{date}}"
   },
   "transactions": {
     "title": "Transacciones",

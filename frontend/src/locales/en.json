@@ -878,7 +878,10 @@
     "fxRateUsed": "FX rate: {{rate}}",
     "refreshRates": "Refresh FX rates",
     "ratesRefreshed": "FX rates updated",
-    "ratesError": "Failed to update FX rates"
+    "ratesError": "Failed to update FX rates",
+    "openBills": "Open bills",
+    "openBillsSubtitle": "{{count}} cards · due {{date}}",
+    "openBillsDue": "due {{date}}"
   },
   "transactions": {
     "title": "Transactions",

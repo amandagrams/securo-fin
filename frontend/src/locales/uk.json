@@ -886,7 +886,10 @@
     "fxRateUsed": "Курс: {{rate}}",
     "refreshRates": "Оновити курси валют",
     "ratesRefreshed": "Курси валют оновлено",
-    "ratesError": "Не вдалося оновити курси валют"
+    "ratesError": "Не вдалося оновити курси валют",
+    "openBills": "Відкриті рахунки",
+    "openBillsSubtitle": "{{count}} карток · строк {{date}}",
+    "openBillsDue": "строк {{date}}"
   },
   "transactions": {
     "title": "Транзакції",

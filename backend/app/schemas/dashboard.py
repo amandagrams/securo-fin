@@ -1,4 +1,6 @@
-from typing import Optional
+import uuid
+from datetime import date
+from typing import Literal, Optional
 
 from pydantic import BaseModel, Field
 
@@ -72,3 +74,30 @@ class ProjectedTransaction(BaseModel):
     category_name: Optional[str]
     category_icon: Optional[str]
     category_color: Optional[str] = None
+
+
+class OpenCreditCardBill(BaseModel):
+    """One open credit-card bill on the dashboard.
+
+    `amount` is the account-currency total of the current cycle (the same
+    `projected_expenses` the account page shows). `amount_primary` is that
+    total in the workspace's primary currency.
+    """
+
+    account_id: uuid.UUID
+    account_name: str
+    masked_number: Optional[str] = None
+    institution_logo_url: Optional[str] = None
+    due_date: date
+    close_date: date
+    status: Literal["open", "closed"]
+    amount: float
+    amount_primary: float
+    currency: str
+
+
+class OpenCreditCardBills(BaseModel):
+    items: list[OpenCreditCardBill] = Field(default_factory=list)
+    total_primary: float = 0.0
+    accounts_count: int = 0
+    earliest_due_date: Optional[date] = None

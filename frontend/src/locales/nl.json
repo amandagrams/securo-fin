@@ -878,7 +878,10 @@
     "fxRateUsed": "Wisselkoers: {{rate}}",
     "refreshRates": "Vernieuw de wisselkoersen",
     "ratesRefreshed": "FX-tarieven bijgewerkt",
-    "ratesError": "Kan de valutakoersen niet updaten"
+    "ratesError": "Kan de valutakoersen niet updaten",
+    "openBills": "Openstaande facturen",
+    "openBillsSubtitle": "{{count}} kaarten · vervalt {{date}}",
+    "openBillsDue": "vervalt {{date}}"
   },
   "transactions": {
     "title": "Transacties",

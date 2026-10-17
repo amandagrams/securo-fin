@@ -878,7 +878,10 @@
     "fxRateUsed": "為替レート: {{rate}}",
     "refreshRates": "為替レートを更新",
     "ratesRefreshed": "為替レートを更新しました",
-    "ratesError": "為替レートの更新に失敗しました"
+    "ratesError": "為替レートの更新に失敗しました",
+    "openBills": "未払いの請求",
+    "openBillsSubtitle": "{{count}}枚のカード · 期日 {{date}}",
+    "openBillsDue": "期日 {{date}}"
   },
   "transactions": {
     "title": "取引",

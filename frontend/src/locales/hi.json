@@ -878,7 +878,10 @@
     "fxRateUsed": "FX दर: {{rate}}",
     "refreshRates": "FX दरें रीफ़्रेश करें",
     "ratesRefreshed": "FX दरें अपडेट हुईं",
-    "ratesError": "FX दरें अपडेट करने में विफल"
+    "ratesError": "FX दरें अपडेट करने में विफल",
+    "openBills": "खुले बिल",
+    "openBillsSubtitle": "{{count}} कार्ड · देय {{date}}",
+    "openBillsDue": "देय {{date}}"
   },
   "transactions": {
     "title": "लेन-देन",

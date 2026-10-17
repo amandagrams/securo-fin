@@ -894,7 +894,10 @@
     "fxRateUsed": "Kurz: {{rate}}",
     "refreshRates": "Obnoviť kurzy",
     "ratesRefreshed": "Kurzy aktualizované",
-    "ratesError": "Kurzy sa nepodarilo aktualizovať"
+    "ratesError": "Kurzy sa nepodarilo aktualizovať",
+    "openBills": "Otvorené faktúry",
+    "openBillsSubtitle": "{{count}} kariet · splatnosť {{date}}",
+    "openBillsDue": "splatnosť {{date}}"
   },
   "transactions": {
     "title": "Transakcie",
