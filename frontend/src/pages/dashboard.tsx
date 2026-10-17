@@ -44,6 +44,7 @@ import { ICON_MAP } from '@/lib/category-icons'
 import { PageHeader } from '@/components/page-header'
 import { CategoryIcon } from '@/components/category-icon'
 import { AccountIcon } from '@/components/account-icon'
+import { OpenBillsCard } from '@/components/open-bills-card'
 import { TransactionDrillDown, type DrillDownFilter } from '@/components/transaction-drill-down'
 import { TransactionDialog, type RecurringSaveInput, type TransactionSavePayload } from '@/components/transaction-dialog'
 import { saveEditedTransaction } from '@/hooks/use-create-transaction'
@@ -907,6 +908,8 @@ export default function DashboardPage() {
           </div>
         )
       )}
+
+      <OpenBillsCard primaryCurrency={primaryCurrency} />
 
       {/* Charts: Category Spending Bars + Balance Evolution */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 mb-5" style={{ gridAutoRows: 'minmax(380px, auto)' }}>

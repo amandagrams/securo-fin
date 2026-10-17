@@ -12,6 +12,7 @@ import { applyTransactionToBalance, excludeMaterializedProjections, transactionA
 import { invalidateFinancialQueries } from '@/lib/invalidate-queries'
 import { shouldShowPendingBadge } from '@/lib/transaction-status'
 import { closeDateForBill, isOpenCycleWindow } from '@/lib/credit-card-cycle'
+import { BillComposition, BillCycleStatus, BillEstimateNotice, resolveBillCycleStatus } from '@/components/bill-composition'
 import { toast } from 'sonner'
 import type { CreditCardBill, ProjectedTransaction, Transaction } from '@/types'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -20,6 +21,7 @@ import { ArrowLeft, ArrowLeftRight, CalendarClock, ChevronLeft, ChevronRight, Cl
 import { MobileTransactionRow } from '@/components/mobile-transaction-row'
 import { CategoryIcon } from '@/components/category-icon'
 import { ProjectedTransactionBadge } from '@/components/projected-transaction-badge'
+import { UpcomingBillsSection } from '@/components/upcoming-bills-section'
 import { TransactionDialog, type RecurringSaveInput, type TransactionSavePayload } from '@/components/transaction-dialog'
 import { extractApiError } from '@/lib/api-errors'
 import { TransferDialog } from '@/components/transfer-dialog'
@@ -935,6 +937,20 @@ export default function AccountDetailPage() {
     return <p className="text-muted-foreground">{t('accounts.notFound')}</p>
   }
 
+  const billStatus = isCreditCard
+    ? resolveBillCycleStatus({
+        statementCloseDay: account.statement_close_day,
+        isInProgressCycle,
+        isCycleMathWindow,
+        activeBillDueDate: activeBill?.due_date ?? null,
+        filterTo,
+        dueDate: activeBill
+          ? activeBill.due_date
+          : dueDateForCycle(filterTo, account.payment_due_day),
+        today: format(new Date(), 'yyyy-MM-dd'),
+      })
+    : null
+
   return (
     <div>
       {/* Header */}
@@ -1085,6 +1101,14 @@ export default function AccountDetailPage() {
               </div>
             </>
           )}
+          {billStatus && (
+            <BillCycleStatus
+              variant={billStatus.variant}
+              closeDate={billStatus.closeDate}
+              dueDate={billStatus.dueDate}
+              dateLocale={dateLocale}
+            />
+          )}
           {hasFilters && (
             <Button
               variant="ghost"
@@ -1209,6 +1233,15 @@ export default function AccountDetailPage() {
         )
       })()}
 
+      <UpcomingBillsSection
+        accountId={account.id}
+        accountType={account.type}
+        currency={account.currency}
+        showPrimary={showPrimary}
+        primaryCurrency={userCurrency}
+        locale={locale}
+      />
+
       {/* Compact stat bar */}
       {isCreditCard ? (() => {
         // Total da fatura. When a real bill is active, sum debits from the
@@ -1281,6 +1314,7 @@ export default function AccountDetailPage() {
               <p className="text-[length:clamp(0.7rem,3.5vw,1.25rem)] sm:text-2xl font-bold tabular-nums text-foreground">
                 {mask(formatCurrency(billTotal, displayCurrency, locale))}
               </p>
+              {isInProgressCycle && <BillEstimateNotice />}
               {deltaPct != null && prevCycleLabel && (
                 <p className={`text-[10px] sm:text-xs font-medium mt-0.5 tabular-nums ${deltaPct > 0 ? 'text-rose-500' : 'text-emerald-600'}`}>
                   {deltaPct > 0 ? '+' : ''}{deltaPct.toFixed(0)}% <span className="text-muted-foreground font-normal">vs {prevCycleLabel}</span>
@@ -1369,6 +1403,14 @@ export default function AccountDetailPage() {
             )}
           </div>
         </div>
+      )}
+
+      {isCreditCard && (
+        <BillComposition
+          purchases={(showPrimary ? summary?.bill_purchases_primary : undefined) ?? summary?.bill_purchases ?? 0}
+          refunds={(showPrimary ? summary?.bill_refunds_primary : undefined) ?? summary?.bill_refunds ?? 0}
+          formatAmount={(amount) => mask(formatCurrency(amount, displayCurrency, locale))}
+        />
       )}
 
       {isCreditCard && (() => {

@@ -20,6 +20,7 @@ from app.schemas.account import (
     AccountSummary,
     AccountUpdate,
     CreditCardBillRead,
+    UpcomingBillsRead,
 )
 from app.services import account_service
 from app.services.fx_rate_service import convert
@@ -78,6 +79,15 @@ async def get_account_summary(
         summary["monthly_expenses_primary"] = float(exp)
         summary["projected_income_primary"] = float(projected_inc)
         summary["projected_expenses_primary"] = float(projected_exp)
+        if summary.get("bill_purchases") is not None and summary.get("bill_refunds") is not None:
+            bill_purchases, _ = await convert(
+                session, Decimal(str(summary["bill_purchases"])), account.currency, primary_currency,
+            )
+            bill_refunds, _ = await convert(
+                session, Decimal(str(summary["bill_refunds"])), account.currency, primary_currency,
+            )
+            summary["bill_purchases_primary"] = float(bill_purchases)
+            summary["bill_refunds_primary"] = float(bill_refunds)
 
     return summary
 
@@ -130,6 +140,28 @@ async def get_account_bills(
     if bills is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Account not found")
     return bills
+
+
+@router.get("/{account_id}/upcoming-bills", response_model=UpcomingBillsRead)
+async def get_account_upcoming_bills(
+    account_id: uuid.UUID,
+    cycles: int = Query(
+        6, ge=1, le=24, description="Future cycles to return, oldest due date first",
+    ),
+    ctx: WorkspaceContext = Depends(current_workspace),
+    session: AsyncSession = Depends(get_async_session),
+):
+    """Cycles after the one in progress, with installments and charges already known.
+
+    The series is not computed on the client and missing parcels are not
+    written as transactions. Same workspace scope as ``GET /bills``.
+    """
+    payload = await account_service.get_upcoming_bills(
+        session, account_id, ctx.workspace.id, ctx.user.primary_currency, cycles=cycles,
+    )
+    if payload is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Account not found")
+    return payload
 
 
 @router.get("/{account_id}/cards", response_model=list[AccountCardRead])

@@ -22,6 +22,7 @@ const api = vi.hoisted(() => ({
     summary: vi.fn(),
     list: vi.fn(),
     update: vi.fn(),
+    upcomingBills: vi.fn(),
   },
   transactions: { list: vi.fn(), update: vi.fn(), delete: vi.fn(), create: vi.fn() },
   dashboard: { projectedTransactions: vi.fn() },
@@ -92,6 +93,11 @@ beforeEach(() => {
   api.accounts.get.mockResolvedValue(account)
   api.accounts.bills.mockResolvedValue(bills)
   api.accounts.list.mockResolvedValue([account])
+  api.accounts.upcomingBills.mockResolvedValue({
+    cycles: [],
+    future_committed_total: null,
+    future_committed_total_primary: null,
+  })
   api.accounts.summary.mockResolvedValue({
     monthly_income: 0, monthly_expenses: 0, projected_income: 0, projected_expenses: 0,
   })

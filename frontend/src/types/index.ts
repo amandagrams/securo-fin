@@ -199,6 +199,22 @@ export interface CreditCardBill {
   minimum_payment: number | null
 }
 
+/** One cycle after the bill in progress. Totals are already computed. */
+export interface UpcomingBillCycle {
+  due_date: string
+  close_date: string
+  committed_total: number
+  committed_total_primary: number
+  currency: string
+}
+
+/** Future commitments on a credit card. Null totals mean the account cannot project. */
+export interface UpcomingBills {
+  cycles: UpcomingBillCycle[]
+  future_committed_total: number | null
+  future_committed_total_primary: number | null
+}
+
 /** A card seen on an account's transactions and the name the user gave it.
  *  Keyed by (account, card_number); not an account — no balance, no limit.
  *  Only cards that appeared on at least one transaction are listed. */
@@ -234,6 +250,10 @@ export interface AccountSummary {
   projected_expenses?: number
   projected_income_primary?: number | null
   projected_expenses_primary?: number | null
+  bill_purchases?: number | null
+  bill_refunds?: number | null
+  bill_purchases_primary?: number | null
+  bill_refunds_primary?: number | null
 }
 
 /** Set when this transaction settles an invoice. Absent in workspaces
@@ -728,6 +748,26 @@ export interface DashboardSummary {
   pending_shares_net: number
 }
 
+export interface OpenCreditCardBill {
+  account_id: string
+  account_name: string
+  masked_number: string | null
+  institution_logo_url: string | null
+  due_date: string
+  close_date: string
+  status: 'open' | 'closed'
+  amount: number
+  amount_primary: number
+  currency: string
+}
+
+export interface OpenCreditCardBills {
+  items: OpenCreditCardBill[]
+  total_primary: number
+  accounts_count: number
+  earliest_due_date: string | null
+}
+
 export interface SpendingByCategory {
   category_id: string | null
   category_name: string
@@ -736,6 +776,20 @@ export interface SpendingByCategory {
   total: number
   projected_total: number
   percentage: number
+}
+
+export interface CategoryFlowItem {
+  category_id: string | null
+  category_name: string
+  category_icon: string
+  category_color: string
+  total: number
+  percentage: number
+}
+
+export interface CategoryFlows {
+  outflows: CategoryFlowItem[]
+  inflows: CategoryFlowItem[]
 }
 
 export interface MonthlyTrend {

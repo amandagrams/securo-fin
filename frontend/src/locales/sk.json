@@ -894,7 +894,10 @@
     "fxRateUsed": "Kurz: {{rate}}",
     "refreshRates": "Obnoviť kurzy",
     "ratesRefreshed": "Kurzy aktualizované",
-    "ratesError": "Kurzy sa nepodarilo aktualizovať"
+    "ratesError": "Kurzy sa nepodarilo aktualizovať",
+    "openBills": "Otvorené faktúry",
+    "openBillsSubtitle": "{{count}} kariet · splatnosť {{date}}",
+    "openBillsDue": "splatnosť {{date}}"
   },
   "transactions": {
     "title": "Transakcie",
@@ -1264,6 +1267,16 @@
     "minimumPayment": "Minimum",
     "noChargesYet": "V tomto cykle zatiaľ žiadne čerpanie",
     "noCard": "Bez karty",
+    "upcomingBills": "Nadchádzajúce faktúry",
+    "upcomingBillsEstimate": "odhad zo známych splátok a pohybov",
+    "billCompositionTitle": "Odkiaľ táto suma pochádza",
+    "billPurchases": "Nákupy",
+    "billRefunds": "Vrátenia",
+    "billTotalLine": "Faktúra",
+    "billOpen": "Otvorená faktúra · uzatvára sa {{close}} · splatnosť {{due}}",
+    "billClosedDue": "Uzavretá faktúra · uzavretá {{close}} · splatnosť {{due}}",
+    "billClosedWasDue": "Uzavretá faktúra · uzavretá {{close}} · bola splatná {{due}}",
+    "billEstimated": "Odhad — banka túto faktúru ešte neuzavrela; sčítavame platby, ktoré už poslala",
     "cardNames": "Názvy kariet",
     "noCardsSeen": "Na tomto účte zatiaľ nebola zaznamenaná žiadna karta.",
     "currentTag": "teraz",
@@ -1711,7 +1724,18 @@
     "hideWithRulesTitle": "Skryť {{name}}?",
     "hideWithRulesDescription": "Túto kategóriu priraďuje {{count}} aktívnych pravidiel. Skrytie kategórie im už bráni kategorizovať nové transakcie. Ich vypnutie zastaví celé pravidlo vrátane príjemcu alebo poznámok, ktoré tiež nastavuje.",
     "hideKeepRules": "Len skryť",
-    "hideAndTurnOffRules": "Skryť a vypnúť pravidlá"
+    "hideAndTurnOffRules": "Skryť a vypnúť pravidlá",
+    "monthOutflows": "Výdavky podľa kategórie",
+    "monthInflows": "Príjmy podľa kategórie",
+    "uncategorized": "Bez kategórie",
+    "noCategoryFound": "Nenašla sa žiadna kategória",
+    "noOutflows": "Žiadne výdavky v tomto mesiaci",
+    "noInflows": "Žiadne príjmy v tomto mesiaci",
+    "automaticRules": "Automatické pravidlá",
+    "newCategoryAction": "Nová kategória",
+    "flowSearch": "Hľadať kategórie",
+    "previousMonth": "Predchádzajúci mesiac",
+    "nextMonth": "Nasledujúci mesiac"
   },
   "groups": {
     "title": "Skupiny kategórií",

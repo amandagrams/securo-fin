@@ -892,7 +892,10 @@
     "fxRateUsed": "Kurs FX: {{rate}}",
     "refreshRates": "Odśwież kursy FX",
     "ratesRefreshed": "Zaktualizowano kursy FX",
-    "ratesError": "Nie udało się zaktualizować kursów FX"
+    "ratesError": "Nie udało się zaktualizować kursów FX",
+    "openBills": "Otwarte rachunki",
+    "openBillsSubtitle": "{{count}} kart · termin {{date}}",
+    "openBillsDue": "termin {{date}}"
   },
   "transactions": {
     "title": "Transakcje",
@@ -1252,6 +1255,16 @@
     "minimumPayment": "Minimalna",
     "noChargesYet": "Brak obciążeń w tym cyklu",
     "noCard": "Bez karty",
+    "upcomingBills": "Nadchodzące faktury",
+    "upcomingBillsEstimate": "szacunek na podstawie znanych rat i obciążeń",
+    "billCompositionTitle": "Skąd bierze się ta kwota",
+    "billPurchases": "Zakupy",
+    "billRefunds": "Zwroty",
+    "billTotalLine": "Rachunek",
+    "billOpen": "Otwarty rachunek · zamyka się {{close}} · termin {{due}}",
+    "billClosedDue": "Zamknięty rachunek · zamknięty {{close}} · termin {{due}}",
+    "billClosedWasDue": "Zamknięty rachunek · zamknięty {{close}} · termin minął {{due}}",
+    "billEstimated": "Szacunkowo — bank nie zamknął jeszcze tego rachunku; sumujemy obciążenia, które już przysłał",
     "cardNames": "Nazwy kart",
     "noCardsSeen": "Na tym koncie nie widać jeszcze żadnej karty.",
     "currentTag": "teraz",
@@ -1690,7 +1703,18 @@
     "hideWithRulesTitle": "Ukryć {{name}}?",
     "hideWithRulesDescription": "Tę kategorię przypisuje {{count}} aktywnych reguł. Ukrycie jej już powstrzymuje je przed kategoryzowaniem nowych transakcji. Wyłączenie zatrzymuje całą regułę, w tym odbiorcę i notatki, które również ustawia.",
     "hideKeepRules": "Tylko ukryj",
-    "hideAndTurnOffRules": "Ukryj i wyłącz reguły"
+    "hideAndTurnOffRules": "Ukryj i wyłącz reguły",
+    "monthOutflows": "Wydatki według kategorii",
+    "monthInflows": "Wpływy według kategorii",
+    "uncategorized": "Bez kategorii",
+    "noCategoryFound": "Nie znaleziono kategorii",
+    "noOutflows": "Brak wydatków w tym miesiącu",
+    "noInflows": "Brak wpływów w tym miesiącu",
+    "automaticRules": "Reguły automatyczne",
+    "newCategoryAction": "Nowa kategoria",
+    "flowSearch": "Szukaj kategorii",
+    "previousMonth": "Poprzedni miesiąc",
+    "nextMonth": "Następny miesiąc"
   },
   "groups": {
     "title": "Grupy kategorii",

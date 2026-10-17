@@ -880,7 +880,10 @@
     "fxRateUsed": "Tasso di cambio: {{rate}}",
     "refreshRates": "Aggiorna i tassi di cambio",
     "ratesRefreshed": "Tassi di cambio aggiornati",
-    "ratesError": "Impossibile aggiornare i tassi di cambio"
+    "ratesError": "Impossibile aggiornare i tassi di cambio",
+    "openBills": "Fatture aperte",
+    "openBillsSubtitle": "{{count}} carte · scadenza {{date}}",
+    "openBillsDue": "scadenza {{date}}"
   },
   "transactions": {
     "title": "Transazioni",
@@ -1212,6 +1215,16 @@
     "minimumPayment": "Minimo",
     "noChargesYet": "Ancora nessun addebito in questo ciclo",
     "noCard": "Senza carta",
+    "upcomingBills": "Prossime fatture",
+    "upcomingBillsEstimate": "stima da rate e addebiti già noti",
+    "billCompositionTitle": "Da dove viene questo importo",
+    "billPurchases": "Acquisti",
+    "billRefunds": "Rimborsi",
+    "billTotalLine": "Fattura",
+    "billOpen": "Fattura aperta · chiude {{close}} · scade {{due}}",
+    "billClosedDue": "Fattura chiusa · chiusa {{close}} · scade {{due}}",
+    "billClosedWasDue": "Fattura chiusa · chiusa {{close}} · scaduta {{due}}",
+    "billEstimated": "Stimato — la banca non ha ancora chiuso questa fattura; sommiamo gli addebiti che ha già inviato",
     "cardNames": "Nomi delle carte",
     "noCardsSeen": "Nessuna carta è stata ancora vista su questo conto.",
     "currentTag": "ora",
@@ -1623,7 +1636,18 @@
     "hideWithRulesTitle": "Nascondere {{name}}?",
     "hideWithRulesDescription": "{{count}} regole attive assegnano questa categoria. Nasconderla impedisce già di categorizzare nuove transazioni. Disattivarle ferma l’intera regola, incluso il beneficiario o le note che imposta.",
     "hideKeepRules": "Nascondi soltanto",
-    "hideAndTurnOffRules": "Nascondi e disattiva le regole"
+    "hideAndTurnOffRules": "Nascondi e disattiva le regole",
+    "monthOutflows": "Uscite per categoria",
+    "monthInflows": "Entrate per categoria",
+    "uncategorized": "Senza categoria",
+    "noCategoryFound": "Nessuna categoria trovata",
+    "noOutflows": "Nessuna uscita questo mese",
+    "noInflows": "Nessuna entrata questo mese",
+    "automaticRules": "Regole automatiche",
+    "newCategoryAction": "Nuova categoria",
+    "flowSearch": "Cerca categorie",
+    "previousMonth": "Mese precedente",
+    "nextMonth": "Mese successivo"
   },
   "groups": {
     "title": "Gruppi di categorie",
