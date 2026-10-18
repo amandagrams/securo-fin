@@ -26,6 +26,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import type { Account, BankConnection } from '@/types'
 import { RefreshCw, TriangleAlert, Unlink, Settings } from 'lucide-react'
 import { AccountIcon, ConnectionLogo } from '@/components/account-icon'
+import { CreditCardListDetails } from '@/components/credit-card-list-details'
 import { getAccountTypeConfig } from '@/lib/account-type-config'
 import { AccountPageActions } from '@/components/account-page-actions'
 import { AccountRowActions } from '@/components/account-row-actions'
@@ -288,6 +289,7 @@ export default function AccountsPage() {
                             {acc.shared_balance_group && <> · <span>{t('accounts.sharedCreditBalance')}</span></>}
                             {dueText && <> · <span className={dueClass}>{dueText}</span></>}
                           </p>
+                          {isCC && <CreditCardListDetails account={acc} />}
                         </div>
                       </Link>
                       <div className="shrink-0 text-right">
@@ -438,6 +440,7 @@ export default function AccountsPage() {
                                     {acc.shared_balance_group && <> · <span>{t('accounts.sharedCreditBalance')}</span></>}
                                     {dueText && <> · <span className={dueClass}>{dueText}</span></>}
                                   </p>
+                                  {isCC && <CreditCardListDetails account={acc} />}
                                 </div>
                               </Link>
                               <div className="shrink-0 text-right">

@@ -7,7 +7,15 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_async_session
 from app.core.workspace_context import WorkspaceContext, current_workspace
-from app.schemas.dashboard import DashboardSummary, SpendingByCategory, MonthlyTrend, ProjectedTransaction, BalanceHistory, OpenCreditCardBills, CategoryFlows
+from app.schemas.dashboard import (
+    BalanceHistory,
+    CategoryFlows,
+    DashboardSummary,
+    MonthlyTrend,
+    OpenCreditCardBills,
+    ProjectedTransaction,
+    SpendingByCategory,
+)
 from app.services import dashboard_service
 
 router = APIRouter(prefix="/api/dashboard", tags=["dashboard"])
@@ -88,17 +96,6 @@ async def get_projected_transactions(
         raise HTTPException(status_code=422, detail=str(exc)) from exc
 
 
-@router.get("/category-flows", response_model=CategoryFlows)
-async def get_category_flows(
-    month: Optional[date] = Query(None),
-    ctx: WorkspaceContext = Depends(current_workspace),
-    session: AsyncSession = Depends(get_async_session),
-):
-    return await dashboard_service.get_category_flows(
-        session, ctx.workspace.id, ctx.user_id, month
-    )
-
-
 @router.get("/credit-card-bills", response_model=OpenCreditCardBills)
 async def get_credit_card_bills(
     ctx: WorkspaceContext = Depends(current_workspace),
@@ -106,4 +103,15 @@ async def get_credit_card_bills(
 ):
     return await dashboard_service.get_credit_card_bills(
         session, ctx.workspace.id, ctx.user_id,
+    )
+
+
+@router.get("/category-flows", response_model=CategoryFlows)
+async def get_category_flows(
+    month: Optional[date] = Query(None),
+    ctx: WorkspaceContext = Depends(current_workspace),
+    session: AsyncSession = Depends(get_async_session),
+):
+    return await dashboard_service.get_category_flows(
+        session, ctx.workspace.id, ctx.user_id, month,
     )

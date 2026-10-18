@@ -1342,12 +1342,12 @@ export const dashboard = {
     const { data } = await api.get('/dashboard/balance-history', { params: { month, ...(extra.params ?? {}) }, ...(extra.paramsSerializer ? { paramsSerializer: extra.paramsSerializer } : {}) })
     return data
   },
-  categoryFlows: async (month?: string): Promise<CategoryFlows> => {
-    const { data } = await api.get('/dashboard/category-flows', { params: { month } })
-    return data
-  },
   creditCardBills: async (): Promise<OpenCreditCardBills> => {
     const { data } = await api.get('/dashboard/credit-card-bills')
+    return data
+  },
+  categoryFlows: async (month?: string): Promise<CategoryFlows> => {
+    const { data } = await api.get('/dashboard/category-flows', { params: { month } })
     return data
   },
 }

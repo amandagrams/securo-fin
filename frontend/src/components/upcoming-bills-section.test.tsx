@@ -155,9 +155,6 @@ describe('próximas faturas', () => {
       future_committed_total: 14,
       future_committed_total_primary: 77,
     })
-    const usd = formatCurrency(14, 'USD', 'en-US')
-    const brl = formatCurrency(77, 'BRL', 'en-US')
-
     const accountCurrency = renderSection({
       currency: 'USD',
       showPrimary: false,
@@ -165,8 +162,8 @@ describe('próximas faturas', () => {
       locale: 'en-US',
     })
     const accountLine = (await screen.findAllByRole('listitem'))[0]
-    expect(lineParts(accountLine)[1]).toBe(usd)
-    expect(lineParts(accountLine)[1]).not.toBe(brl)
+    expect(lineParts(accountLine)[1]).toBe(formatCurrency(14, 'USD', 'en-US'))
+    expect(lineParts(accountLine)[1]).not.toBe(formatCurrency(77, 'BRL', 'en-US'))
     accountCurrency.unmount()
 
     renderSection({
@@ -176,7 +173,7 @@ describe('próximas faturas', () => {
       locale: 'en-US',
     })
     const primaryLine = (await screen.findAllByRole('listitem'))[0]
-    expect(lineParts(primaryLine)[1]).toBe(brl)
-    expect(lineParts(primaryLine)[1]).not.toBe(usd)
+    expect(lineParts(primaryLine)[1]).toBe(formatCurrency(77, 'BRL', 'en-US'))
+    expect(lineParts(primaryLine)[1]).not.toBe(formatCurrency(14, 'USD', 'en-US'))
   })
 })

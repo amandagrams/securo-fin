@@ -234,6 +234,7 @@ async def test_rule_copies_the_transaction_and_is_listed(
     by_description = {row["description"]: row for row in listed.json()}
 
     copied = by_description["Open ended"]
+    assert copied["description"] == "Open ended"
     assert copied["id"] == without_end.json()["recurring_transaction_id"]
     assert Decimal(str(copied["amount"])) == Decimal("49.90")
     assert copied["currency"] == "BRL"
@@ -248,6 +249,7 @@ async def test_rule_copies_the_transaction_and_is_listed(
     assert copied["weekend_adjustment"] == "none"
 
     bounded = by_description["Closed ended"]
+    assert bounded["description"] == "Closed ended"
     assert bounded["id"] == with_end.json()["recurring_transaction_id"]
     assert Decimal(str(bounded["amount"])) == Decimal("12.00")
     assert bounded["currency"] == "USD"

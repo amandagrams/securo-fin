@@ -75,6 +75,7 @@ function account(overrides: Partial<Account>): Account {
     is_closed: false,
     closed_at: null,
     ...overrides,
+    payment_account_id: overrides.payment_account_id ?? null,
   }
 }
 

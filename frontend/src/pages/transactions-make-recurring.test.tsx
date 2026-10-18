@@ -12,7 +12,7 @@ import type { UserEvent } from '@testing-library/user-event'
 import { TransactionDialog } from '@/components/transaction-dialog'
 import TransactionsPage from '@/pages/transactions'
 import i18n from '@/lib/i18n'
-import { createTestQueryClient, renderWithProviders } from '@/test/utils'
+import { renderWithProviders } from '@/test/utils'
 import type { Account, Transaction } from '@/types'
 
 const api = vi.hoisted(() => ({
@@ -134,8 +134,7 @@ function makeTx(overrides: Partial<Transaction> = {}): Transaction {
 }
 
 function renderPage() {
-  const queryClient = createTestQueryClient()
-  return { queryClient, ...renderWithProviders(<TransactionsPage />, { queryClient }) }
+  return renderWithProviders(<TransactionsPage />)
 }
 
 function renderDialog(

@@ -35,6 +35,7 @@ import { useIsMobile } from '@/hooks/use-mobile'
 import { useAuth } from '@/contexts/auth-context'
 import { useWorkspace } from '@/contexts/workspace-context'
 import { saveEditedTransaction, useCreateTransaction } from '@/hooks/use-create-transaction'
+import { utilizationColor } from '@/lib/credit-utilization'
 import { resolveDateFnsLocale } from '@/lib/date-fns-locale'
 import { formatCurrency } from '@/lib/format'
 import {
@@ -253,13 +254,6 @@ function cycleRangeLabel(from: string, to: string, i18nLanguage: string): string
   const pattern = from.slice(0, 4) === to.slice(0, 4) ? 'dd MMM' : "dd MMM ''yy"
   const at = (d: string) => format(parseISO(d + 'T00:00:00'), pattern, { locale: dfLocale })
   return `${at(from)} - ${at(to)}`
-}
-
-function utilizationColor(pct: number): string {
-  if (pct >= 90) return 'bg-rose-500'
-  if (pct >= 70) return 'bg-amber-400'
-  if (pct >= 30) return 'bg-blue-500'
-  return 'bg-emerald-500'
 }
 
 type TxWithBalance = Transaction & { runningBalance: number }

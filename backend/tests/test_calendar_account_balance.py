@@ -130,17 +130,26 @@ async def test_projected_walk_pending_future_posted_and_transfer(
 
     body = await _calendar(client, auth_headers, date(t_day.year, t_day.month, 1), conta.id)
     assert body["actual_balance"] == 1000.0
-    for row in body["days"]:
-        current = date.fromisoformat(row["date"])
-        if current < t_day:
-            expected = 1000.0
-        elif current < c_day:
-            expected = 920.0
-        elif current < x_day:
-            expected = 1120.0
-        else:
-            expected = 1080.0
-        assert row["ending_balance"] == expected, (current, row["ending_balance"], expected)
+    assert all(
+        row["ending_balance"] == 1000.0
+        for row in body["days"]
+        if date.fromisoformat(row["date"]) < t_day
+    )
+    assert all(
+        row["ending_balance"] == 920.0
+        for row in body["days"]
+        if t_day <= date.fromisoformat(row["date"]) < c_day
+    )
+    assert all(
+        row["ending_balance"] == 1120.0
+        for row in body["days"]
+        if c_day <= date.fromisoformat(row["date"]) < x_day
+    )
+    assert all(
+        row["ending_balance"] == 1080.0
+        for row in body["days"]
+        if date.fromisoformat(row["date"]) >= x_day
+    )
 
     mercado_item = next(item for item in _on(body, t_day)["items"] if item["description"] == "Mercado")
     assert mercado_item["kind"] == "projected"
@@ -242,12 +251,13 @@ async def test_card_cycle_drops_checking_on_due_date_once(
 
     body = await _calendar(client, auth_headers, date(due.year, due.month, 1), conta.id)
     assert body["actual_balance"] == 1000.0
-    for row in body["days"]:
-        current = date.fromisoformat(row["date"])
-        expected = 750.0 if current >= due else 1000.0
-        assert row["ending_balance"] == expected, (current, row["ending_balance"])
+    assert all(
+        row["ending_balance"] == (750.0 if date.fromisoformat(row["date"]) >= due else 1000.0)
+        for row in body["days"]
+    )
 
     due_row = _on(body, due)
+    assert any(item["description"] == "Nubank" for item in due_row["items"])
     bill = next(item for item in due_row["items"] if item["description"] == "Nubank")
     assert bill["kind"] == "projected"
     assert bill["id"] is None
@@ -436,10 +446,10 @@ async def test_unfiltered_sum_is_open_checking_plus_the_bill(
     combined = await _calendar(client, auth_headers, month)
     assert combined["actual_balance"] == 1000.0
     assert combined["account_ids"] is None
-    for row in combined["days"]:
-        current = date.fromisoformat(row["date"])
-        expected = 750.0 if current >= due else 1000.0
-        assert row["ending_balance"] == expected, (current, row["ending_balance"])
+    assert all(
+        row["ending_balance"] == (750.0 if date.fromisoformat(row["date"]) >= due else 1000.0)
+        for row in combined["days"]
+    )
 
     filtered = await _calendar(client, auth_headers, month, conta.id)
     assert filtered["actual_balance"] == 1000.0

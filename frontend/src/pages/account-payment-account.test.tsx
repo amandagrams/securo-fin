@@ -173,7 +173,7 @@ describe('conta que paga a fatura', () => {
       await user.type(screen.getByRole('textbox'), 'Nubank')
 
       const payer = paymentSelect()
-      expect(screen.getByText(i18n.t('accounts.paymentAccount'))).toBeTruthy()
+      expect(screen.getByText(language === 'pt-BR' ? 'Conta que paga a fatura' : 'Account that pays the bill')).toBeTruthy()
       expect(optionLabels(payer)).toEqual(expect.arrayContaining(['Conta', 'Outra']))
       expect(optionLabels(payer)).not.toEqual(expect.arrayContaining(['Poupança', 'Fechada']))
 
